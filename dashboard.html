@@ -3380,6 +3380,33 @@
     // STATS
     // ============================================================
 
+    function getDashboardTotalQuantity() {
+        const productMap = {};
+
+        readings.forEach(r => {
+            const product = String(r?.produit || '').trim();
+
+            if (!product || product === 'Aucun produit détecté') {
+                return;
+            }
+
+            if (!productMap[product]) {
+                productMap[product] = 0;
+            }
+
+            productMap[product] += Number(r?.jigs_detectees ?? 0);
+        });
+
+        return Object.entries(productMap).reduce(
+            (sum, [product, detectedJigs]) => {
+                const productInfo = getProductInfo(product);
+                const kits = Number(productInfo?.kits) || 0;
+                return sum + kits * detectedJigs;
+            },
+            0
+        );
+    }
+
     function calculateStats() {
 
         const productMap = {};
@@ -3432,58 +3459,7 @@
             );
 
 
-        const totalQuantity =
-            Object.entries(
-                productMap
-            )
-            .reduce(
-                (
-                    sum,
-                    [
-                        product,
-                        detectedJigs
-                    ]
-                ) => {
-                    const productInfo =
-                        getProductInfo(
-                            product
-                        );
-
-                    const kits =
-                        productInfo?.kits || 0;
-
-                    const dbKeys =
-                        Object.keys(
-                            productsDatabase
-                        );
-
-                    const exactMatch =
-                        dbKeys.find(
-                            k =>
-                                String(
-                                    k
-                                ).trim().toUpperCase() ===
-                                String(
-                                    product
-                                ).trim().toUpperCase()
-                        );
-
-                    console.log(
-                        `QT calc: produit="${product}", detectedJigs=${detectedJigs}, kits=${kits}, exactMatch="${exactMatch}", productInfo=`,
-                        productInfo
-                    );
-
-                    if (kits === 0) {
-                        console.warn(
-                            `Produit sans kits dans la base: "${product}" (exactMatch: "${exactMatch}")`
-                        );
-                    }
-
-                    return sum + kits * detectedJigs;
-
-                },
-                0
-            );
+        const totalQuantity = getDashboardTotalQuantity();
 
 
         console.log(
@@ -4514,6 +4490,47 @@
     }
 
 
+    async function generateProductionXML(productNo, eventDateTime, quantity) {
+        try {
+            const response = await fetch('/api/generate-xml', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ProductNo: String(productNo || '').trim(),
+                    EventDateTime: eventDateTime || new Date().toISOString(),
+                    Quantity: Number(quantity) || 0
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Erreur génération XML');
+            }
+
+            console.log('✓ XML généré automatiquement :', result.filename);
+            console.log('  ProductNo :', result.data?.ProductNo);
+            console.log('  EventDateTime :', result.data?.EventDateTime);
+            console.log('  Quantity (Quantité Totale en kits) :', result.data?.Quantity);
+
+            return result;
+        } catch (error) {
+            console.error('Erreur génération XML :', error);
+            return null;
+        }
+    }
+
+    function escapeXml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+    }
+
     function recordDetections(
         counts,
         detections,
@@ -4703,7 +4720,6 @@
             reading
         );
 
-
         readings.unshift(
             reading
         );
@@ -4723,6 +4739,17 @@
 
 
         calculateStats();
+
+        if (jigsDetected > 0) {
+            const dashboardTotalQuantity =
+                getDashboardTotalQuantity();
+
+            generateProductionXML(
+                reading.produit,
+                now.toISOString(),
+                dashboardTotalQuantity
+            );
+        }
 
         updateChart();
 

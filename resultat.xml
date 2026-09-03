@@ -1,0 +1,39 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<FSA_INT_FlatFileManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd" Version="1.0">
+   <FIInvocationSynchronousEvent NodeType="FIInvocation">
+      <StandardOperation>
+         <OperationResolutionMethod>ByOperationCode</OperationResolutionMethod>
+         <OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode>
+      </StandardOperation>
+      <Parameters>
+         <Inputs>
+            <InputName>WorkCenter</InputName>
+            <InputValue>EC002000</InputValue>
+         </Inputs> 
+         <!-- Variable 1 -->
+         <Inputs>
+            <InputName>ProductNo</InputName>
+            <InputValue>A5E33036604019</InputValue>
+         </Inputs>
+         <!-- Variable 2 -->
+         <Inputs>
+            <InputName>EventDateTime</InputName>
+            <InputValue>6/12/2019 02:19 PM</InputValue>
+         </Inputs>
+         <Inputs>
+            <InputName>SerialNo</InputName>
+            <InputValue>AAAA</InputValue>
+         </Inputs>
+         <!-- Variable 3 -->
+         <Inputs>
+            <InputName>Quantity</InputName>
+            <InputValue>1</InputValue>
+         </Inputs>
+         <Inputs>
+            <InputName>CycleTime</InputName>
+            <InputValue>245</InputValue>
+         </Inputs>
+      </Parameters>
+   </FIInvocationSynchronousEvent>
+</FSA_INT_FlatFileManager>

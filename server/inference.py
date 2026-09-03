@@ -4,126 +4,168 @@ import json
 import os
 import sys
 
+import torch
+import torch.nn as nn
 from PIL import Image
-from inference_sdk import InferenceHTTPClient
+from torchvision import models, transforms
 from ultralytics import YOLO
 
 
-WORKSPACE_NAME = "iyeds-workspace-tzluv"
-WORKFLOW_ID = "valeo-vvaleo-pz9hm-1-resnet18-t1-logic"
 PRIMARY_MIN_CONFIDENCE = 0.40
-
 JIG_MIN_CONFIDENCE = 0.20
 
-MODEL2_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+RESNET_MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "resnet50_classification_best.pth"
+)
+
+YOLO_MODEL_PATH = os.path.join(
+    BASE_DIR,
     "best.pt"
 )
 
 
-def compress_image(image_path, max_width=640, max_height=480, quality=75):
-    try:
-        img = Image.open(image_path)
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
 
-        if img.width > max_width or img.height > max_height:
-            img.thumbnail(
-                (max_width, max_height),
-                Image.Resampling.LANCZOS
-            )
 
-        compressed_path = image_path.rsplit(".", 1)[0] + "_compressed.jpg"
+def load_resnet_model():
 
-        img.save(
-            compressed_path,
-            "JPEG",
-            quality=quality,
-            optimize=True
+    if not os.path.isfile(RESNET_MODEL_PATH):
+        raise RuntimeError(
+            f"Modèle ResNet50 introuvable : "
+            f"{RESNET_MODEL_PATH}"
         )
 
-        return compressed_path
+    checkpoint = torch.load(
+        RESNET_MODEL_PATH,
+        map_location=DEVICE
+    )
+
+    if "model_state_dict" in checkpoint:
+
+        classes = checkpoint["classes"]
+        num_classes = checkpoint["num_classes"]
+
+        model = models.resnet50(
+            weights=None
+        )
+
+        model.fc = nn.Linear(
+            model.fc.in_features,
+            num_classes
+        )
+
+        model.load_state_dict(
+            checkpoint["model_state_dict"]
+        )
+
+    else:
+
+        raise RuntimeError(
+            "Format du modèle ResNet50 invalide. "
+            "Le fichier doit contenir "
+            "'model_state_dict', 'classes' et "
+            "'num_classes'."
+        )
+
+    model = model.to(DEVICE)
+    model.eval()
+
+    return model, classes
+
+
+def classify_product(
+    image_path,
+    model,
+    classes
+):
+
+    transform = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]
+        )
+    ])
+
+    try:
+
+        image = Image.open(
+            image_path
+        ).convert("RGB")
 
     except Exception as e:
-        print(f"Compression warning: {e}", file=sys.stderr)
-        return image_path
 
+        raise RuntimeError(
+            f"Impossible d'ouvrir l'image : {e}"
+        )
 
-def find_predictions(value):
-    all_predictions = []
-
-    if isinstance(value, dict):
-        predictions = value.get("predictions")
-
-        if isinstance(predictions, list):
-            all_predictions.extend(predictions)
-
-        for child in value.values():
-            all_predictions.extend(find_predictions(child))
-
-    elif isinstance(value, list):
-        for child in value:
-            all_predictions.extend(find_predictions(child))
-
-    return all_predictions
-
-
-def normalize_detection(prediction, min_confidence):
-    if not isinstance(prediction, dict):
-        return None
-
-    confidence = prediction.get(
-        "confidence",
-        prediction.get("confidence_score", 0)
+    input_tensor = transform(
+        image
     )
 
-    try:
-        confidence = float(confidence)
-    except (TypeError, ValueError):
-        return None
+    input_tensor = input_tensor.unsqueeze(
+        0
+    ).to(DEVICE)
 
-    if confidence < min_confidence:
-        return None
+    with torch.no_grad():
 
-    label = (
-        prediction.get("class")
-        or prediction.get("class_name")
-        or prediction.get("label")
+        output = model(
+            input_tensor
+        )
+
+        probabilities = torch.softmax(
+            output,
+            dim=1
+        )
+
+        confidence, predicted = torch.max(
+            probabilities,
+            dim=1
+        )
+
+    class_index = predicted.item()
+
+    confidence_value = (
+        confidence.item()
     )
 
-    if not label:
-        return None
+    if class_index >= len(classes):
+        raise RuntimeError(
+            "Indice de classe invalide."
+        )
 
-    x = prediction.get("x")
-    y = prediction.get("y")
-    width = prediction.get("width")
-    height = prediction.get("height")
+    product = str(
+        classes[class_index]
+    )
 
-    if x is None and "detection_box" in prediction:
-        box = prediction["detection_box"]
-
-        x = box.get("x")
-        y = box.get("y")
-        width = box.get("width")
-        height = box.get("height")
-
-    try:
-        x = float(x) if x is not None else None
-        y = float(y) if y is not None else None
-        width = float(width) if width is not None else None
-        height = float(height) if height is not None else None
-    except (TypeError, ValueError):
-        pass
-
-    return {
-        "product": str(label),
-        "confidence": confidence,
-        "x": x,
-        "y": y,
-        "width": width,
-        "height": height
+    detection = {
+        "product": product,
+        "confidence": confidence_value,
+        "x": None,
+        "y": None,
+        "width": None,
+        "height": None,
+        "model": "primary"
     }
 
+    return detection
 
-def detect_jigs_local(image_path, model):
+
+def detect_jigs_local(
+    image_path,
+    model
+):
+
     detections = []
 
     results = model.predict(
@@ -133,30 +175,60 @@ def detect_jigs_local(image_path, model):
     )
 
     for result in results:
+
         if result.boxes is None:
             continue
 
         boxes = result.boxes
 
         for i in range(len(boxes)):
-            confidence = float(boxes.conf[i].item())
+
+            confidence = float(
+                boxes.conf[i].item()
+            )
 
             if confidence < JIG_MIN_CONFIDENCE:
                 continue
 
-            class_id = int(boxes.cls[i].item())
+            class_id = int(
+                boxes.cls[i].item()
+            )
 
-            if isinstance(model.names, dict):
-                label = model.names.get(class_id, str(class_id))
+            if isinstance(
+                model.names,
+                dict
+            ):
+
+                label = model.names.get(
+                    class_id,
+                    str(class_id)
+                )
+
             else:
-                label = model.names[class_id]
 
-            xywh = boxes.xywh[i].tolist()
+                label = model.names[
+                    class_id
+                ]
 
-            x = float(xywh[0])
-            y = float(xywh[1])
-            width = float(xywh[2])
-            height = float(xywh[3])
+            xywh = boxes.xywh[
+                i
+            ].tolist()
+
+            x = float(
+                xywh[0]
+            )
+
+            y = float(
+                xywh[1]
+            )
+
+            width = float(
+                xywh[2]
+            )
+
+            height = float(
+                xywh[3]
+            )
 
             detections.append({
                 "product": str(label),
@@ -173,111 +245,203 @@ def detect_jigs_local(image_path, model):
 
 def main(image_path):
 
-    api_key = os.environ.get("VALEO_ROBOFLOW_API_KEY")
-
-    if not api_key:
-        raise RuntimeError(
-            "VALEO_ROBOFLOW_API_KEY est manquante"
-        )
-
     if not os.path.isfile(image_path):
+
         raise RuntimeError(
-            f"Image introuvable : {image_path}"
+            f"Image introuvable : "
+            f"{image_path}"
         )
 
-    if not os.path.isfile(MODEL2_PATH):
+    if not os.path.isfile(
+        RESNET_MODEL_PATH
+    ):
+
         raise RuntimeError(
-            f"Modèle local introuvable : {MODEL2_PATH}"
+            f"Modèle ResNet50 introuvable : "
+            f"{RESNET_MODEL_PATH}"
         )
 
-    compressed_path = compress_image(image_path)
+    if not os.path.isfile(
+        YOLO_MODEL_PATH
+    ):
 
-    first_client = InferenceHTTPClient(
-        api_url="https://serverless.roboflow.com",
-        api_key=api_key
+        raise RuntimeError(
+            f"Modèle YOLO introuvable : "
+            f"{YOLO_MODEL_PATH}"
+        )
+
+    print(
+        f"[SYSTEM] Device : {DEVICE}",
+        file=sys.stderr
     )
 
+    # ==================================
+    # 1. CLASSIFICATION ResNet50
+    # ==================================
+
     try:
-        first_result = first_client.run_workflow(
-            workspace_name=WORKSPACE_NAME,
-            workflow_id=WORKFLOW_ID,
-            images={"image": compressed_path},
-            use_cache=True
+
+        resnet_model, classes = (
+            load_resnet_model()
         )
 
+        product_detection = (
+            classify_product(
+                image_path,
+                resnet_model,
+                classes
+            )
+        )
+
+        product_detections = []
+
+        if (
+            product_detection["confidence"]
+            >= PRIMARY_MIN_CONFIDENCE
+        ):
+
+            product_detections.append(
+                product_detection
+            )
+
+        else:
+
+            print(
+                "[CLASSIFICATION] "
+                "Confiance sous le seuil.",
+                file=sys.stderr
+            )
+
     except Exception as e:
+
         print(
-            f"Error in first workflow: {e}",
+            f"Error in ResNet50 classification: {e}",
             file=sys.stderr
         )
-        first_result = {}
+
+        product_detections = []
+
+
+    # ==================================
+    # 2. DETECTION YOLO DES JIGS
+    # ==================================
 
     try:
-        local_model = YOLO(MODEL2_PATH)
 
-        jig_detections = detect_jigs_local(
-            image_path,
-            local_model
+        local_model = YOLO(
+            YOLO_MODEL_PATH
+        )
+
+        jig_detections = (
+            detect_jigs_local(
+                image_path,
+                local_model
+            )
         )
 
     except Exception as e:
+
         print(
             f"Error in local YOLO model: {e}",
             file=sys.stderr
         )
+
         jig_detections = []
 
-    product_detections = []
 
-    for prediction in find_predictions(first_result):
-
-        detection = normalize_detection(
-            prediction,
-            PRIMARY_MIN_CONFIDENCE
-        )
-
-        if detection:
-            detection["model"] = "primary"
-            product_detections.append(detection)
+    # ==================================
+    # 3. COMPTAGE PRODUITS
+    # ==================================
 
     counts = {}
 
     for detection in product_detections:
 
-        product = detection["product"]
+        product = detection[
+            "product"
+        ]
 
-        counts[product] = counts.get(product, 0) + 1
+        counts[product] = (
+            counts.get(
+                product,
+                0
+            ) + 1
+        )
+
+
+    # ==================================
+    # 4. COMPTAGE JIGS
+    # ==================================
 
     jig_counts = {}
 
     for detection in jig_detections:
 
-        jig = detection["product"]
+        jig = detection[
+            "product"
+        ]
 
-        jig_counts[jig] = jig_counts.get(jig, 0) + 1
+        jig_counts[jig] = (
+            jig_counts.get(
+                jig,
+                0
+            ) + 1
+        )
 
-    jig_count = len(jig_detections)
+    jig_count = len(
+        jig_detections
+    )
+
+
+    # ==================================
+    # 5. LOGS
+    # ==================================
 
     print(
-        f"[JIG] Modèle local : {MODEL2_PATH}",
+        f"[CLASSIFICATION] "
+        f"Modèle : {RESNET_MODEL_PATH}",
+        file=sys.stderr
+    )
+
+    if product_detections:
+
+        best_product = (
+            product_detections[0]
+        )
+
+        print(
+            f"[CLASSIFICATION] "
+            f"Produit : "
+            f"{best_product['product']} | "
+            f"Confiance : "
+            f"{best_product['confidence']:.2f}",
+            file=sys.stderr
+        )
+
+    else:
+
+        print(
+            "[CLASSIFICATION] "
+            "Aucune classification valide.",
+            file=sys.stderr
+        )
+
+    print(
+        f"[JIG] Modèle : {YOLO_MODEL_PATH}",
         file=sys.stderr
     )
 
     print(
-        f"[JIG] Après seuil {JIG_MIN_CONFIDENCE:.2f} : {jig_count}",
+        f"[JIG] Après seuil "
+        f"{JIG_MIN_CONFIDENCE:.2f} : "
+        f"{jig_count}",
         file=sys.stderr
     )
 
-    try:
 
-        if (
-            compressed_path != image_path
-            and os.path.exists(compressed_path)
-        ):
-            os.remove(compressed_path)
-
-    except Exception:
-        pass
+    # ==================================
+    # 6. RESULTAT JSON
+    # ==================================
 
     result = {
         "detections": product_detections,
@@ -298,8 +462,11 @@ def main(image_path):
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
+
         raise SystemExit(
             "Usage: inference.py IMAGE_PATH"
         )
 
-    main(sys.argv[1])
+    main(
+        sys.argv[1]
+    )

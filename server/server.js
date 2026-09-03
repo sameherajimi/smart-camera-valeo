@@ -34,6 +34,83 @@ const PORT = 3000;
 const capturesDirectory = path.join(__dirname, 'captures');
 const HISTORY_FILE = path.join(__dirname, 'history.json');
 
+
+// ============================================================
+// GENERATION DES FICHIERS XML DE PRODUCTION
+// ============================================================
+const XML_DIRECTORY =
+    process.env.VALEO_XML_DIRECTORY ||
+    path.join(__dirname, 'xml');
+
+const XML_SCHEMA_PATH =
+    'C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd';
+
+function escapeXml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+function formatXmlDateTime(value) {
+    const date = value ? new Date(value) : new Date();
+
+    if (Number.isNaN(date.getTime())) {
+        return formatXmlDateTime(new Date());
+    }
+
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+
+    return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
+}
+
+function buildProductionXml(productNo, eventDateTime, quantityTotal) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<FSA_INT_FlatFileManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="${XML_SCHEMA_PATH}" Version="1.0">
+<FIInvocationSynchronousEvent NodeType="FIInvocation">
+<StandardOperation>
+<OperationResolutionMethod>ByOperationCode</OperationResolutionMethod>
+<OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode>
+</StandardOperation>
+<Parameters>
+<Inputs>
+<InputName>WorkCenter</InputName>
+<InputValue>EC002000</InputValue>
+</Inputs>
+<Inputs>
+<InputName>ProductNo</InputName>
+<InputValue>${escapeXml(productNo)}</InputValue>
+</Inputs>
+<Inputs>
+<InputName>EventDateTime</InputName>
+<InputValue>${escapeXml(eventDateTime)}</InputValue>
+</Inputs>
+<Inputs>
+<InputName>SerialNo</InputName>
+<InputValue>AAAA</InputValue>
+</Inputs>
+<Inputs>
+<InputName>Quantity</InputName>
+<InputValue>${escapeXml(quantityTotal)}</InputValue>
+</Inputs>
+<Inputs>
+<InputName>CycleTime</InputName>
+<InputValue>245</InputValue>
+</Inputs>
+</Parameters>
+</FIInvocationSynchronousEvent>
+</FSA_INT_FlatFileManager>`;
+}
+
 process.env.VALEO_ROBOFLOW_API_KEY =
     process.env.VALEO_ROBOFLOW_API_KEY || 'dQudu2taTYXhZN8DmqZo';
 
@@ -1202,7 +1279,7 @@ app.put('/api/users/profile', (req, res) => {
 
 app.post('/api/alert-empty-balancelles', async (req, res) => {
     try {
-        const { produit, quantite, rendement, timestamp } = req.body || {};
+        const { produit, quantite, timestamp } = req.body || {};
 
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -1248,6 +1325,133 @@ app.post('/api/alert-empty-balancelles', async (req, res) => {
     }
 });
 
+
+
+// ============================================================
+// API : GENERATION XML DE PRODUCTION
+// Quantity = Quantité Totale (en kits)
+// ============================================================
+app.post('/api/generate-xml', async (req, res) => {
+    try {
+        const { ProductNo, EventDateTime, Quantity } = req.body || {};
+
+        if (
+            ProductNo === undefined ||
+            ProductNo === null ||
+            String(ProductNo).trim() === ''
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: 'ProductNo est requis.'
+            });
+        }
+
+        const quantityTotal = normalizeNumeric(Quantity);
+
+        if (!Number.isFinite(quantityTotal) || quantityTotal < 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Quantity est invalide.'
+            });
+        }
+
+        const formattedDateTime = formatXmlDateTime(EventDateTime);
+
+        await fs.mkdir(XML_DIRECTORY, { recursive: true });
+
+        const now = new Date();
+        const datePart = [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, '0'),
+            String(now.getDate()).padStart(2, '0')
+        ].join('');
+
+        const timePart = [
+            String(now.getHours()).padStart(2, '0'),
+            String(now.getMinutes()).padStart(2, '0'),
+            String(now.getSeconds()).padStart(2, '0')
+        ].join('');
+
+        const randomPart = Math.random()
+            .toString(36)
+            .substring(2, 8)
+            .toUpperCase();
+
+        const safeProductName = String(ProductNo)
+            .trim()
+            .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
+            .replace(/\s+/g, '_');
+
+        const existingXmlFiles = await fs.readdir(XML_DIRECTORY);
+
+        for (const existingFile of existingXmlFiles) {
+            if (!existingFile.toLowerCase().endsWith('.xml')) continue;
+            if (!existingFile.startsWith('Production_')) continue;
+
+            const existingName = existingFile.slice('Production_'.length);
+            const dateIndex = existingName.indexOf('_20');
+
+            if (dateIndex === -1) continue;
+
+            const existingProductName = existingName.slice(0, dateIndex);
+
+            if (existingProductName !== safeProductName) {
+                const oldFilePath = path.join(XML_DIRECTORY, existingFile);
+
+                try {
+                    await fs.unlink(oldFilePath);
+                    console.log('✓ Ancien fichier XML supprimé :', existingFile);
+                } catch (deleteError) {
+                    if (deleteError.code !== 'ENOENT') {
+                        console.warn(
+                            '⚠ Impossible de supprimer le fichier XML précédent :',
+                            existingFile,
+                            deleteError.message
+                        );
+                    }
+                }
+            }
+        }
+
+        const filename =
+            `Production_${safeProductName}_${datePart}_${timePart}_${randomPart}.xml`;
+
+        const filePath = path.join(XML_DIRECTORY, filename);
+
+        const xmlContent = buildProductionXml(
+            String(ProductNo).trim(),
+            formattedDateTime,
+            quantityTotal
+        );
+
+        await fs.writeFile(filePath, xmlContent, 'utf8');
+
+        console.log('✓ XML production généré :', filePath);
+        console.log('  ProductNo :', String(ProductNo).trim());
+        console.log('  EventDateTime :', formattedDateTime);
+        console.log('  Quantity (Quantité Totale en kits) :', quantityTotal);
+
+        return res.json({
+            success: true,
+            message: 'Fichier XML généré avec succès.',
+            filename,
+            path: filePath,
+            data: {
+                ProductNo: String(ProductNo).trim(),
+                EventDateTime: formattedDateTime,
+                Quantity: quantityTotal
+            }
+        });
+    } catch (error) {
+        console.error('Erreur génération XML :', error);
+
+        return res.status(500).json({
+            success: false,
+            error: 'Impossible de générer le fichier XML.'
+        });
+    }
+});
+
 app.get('*', (req, res) => {
     res.sendFile(
         path.join(
@@ -1259,6 +1463,12 @@ app.get('*', (req, res) => {
 });
 
 async function startServer() {
+    try {
+        await fs.mkdir(XML_DIRECTORY, { recursive: true });
+        console.log('Dossier XML :', XML_DIRECTORY);
+    } catch (error) {
+        console.error('Erreur création dossier XML :', error.message);
+    }
     try {
         await getDatabase();
 
