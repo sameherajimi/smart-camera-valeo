@@ -1304,10 +1304,6 @@
 
 <script>
 
-    // ============================================================
-    // VARIABLES
-    // ============================================================
-
     let readings = [];
     let chartInstance = null;
 
@@ -1316,17 +1312,16 @@
     let importedImageData = null;
     let analysisTimer = null;
     let isAnalyzing = false;
-    let currentProductName = null; // Produit actuellement affiché dans le tableau
-    let consecutiveEmptyCount = 0; // Compteur de balancelles vides consécutives
+    let currentProductName = null;
+    let consecutiveEmptyCount = 0;
 
     let mediaStream = null;
     let selectedCameraId = '';
 
-    const ANALYSIS_INTERVAL_MS = 10000; // Analyse toutes les 10 secondes
-    const ANALYSIS_TIMEOUT_MS = 10000; // Timeout de 10 secondes
+    const ANALYSIS_INTERVAL_MS = 10000;
+    const ANALYSIS_TIMEOUT_MS = 10000;
 
     const DASHBOARD_STATE_KEY = 'valeo_dashboard_state_v2';
-
 
     function getStoredDashboardState() {
 
@@ -1349,7 +1344,6 @@
 
     }
 
-
     function getImageDimensions(
         dataUrl
     ) {
@@ -1363,7 +1357,6 @@
                 const img =
                     new Image();
 
-
                 img.onload =
                     function() {
 
@@ -1376,10 +1369,8 @@
 
                     };
 
-
                 img.onerror =
                     reject;
-
 
                 img.src =
                     dataUrl;
@@ -1389,9 +1380,6 @@
 
     }
 
-
-    // Nettoie uniquement les cadres temporaires de détection.
-    // Les résultats/statistiques restent affichés.
     function clearDetectionBoxes() {
 
         const overlay =
@@ -1402,7 +1390,6 @@
         }
 
     }
-
 
     function saveDashboardState() {
 
@@ -1467,7 +1454,6 @@
 
     }
 
-
     function restoreDashboardState() {
 
         const state =
@@ -1480,12 +1466,10 @@
             return false;
         }
 
-
         readings =
             Array.isArray(state.readings)
                 ? state.readings
                 : [];
-
 
         window.productTotals =
             state.productTotals &&
@@ -1493,33 +1477,26 @@
                 ? state.productTotals
                 : {};
 
-
         scanCounter =
             Number(state.scanCounter) ||
             readings.length;
 
-
         sameProductDetectionCount =
             0;
-
 
         consecutiveEmptyCount =
             0;
 
-
         window.__valeoAutoSaved =
             false;
 
-
         selectedCameraId =
             state.selectedCameraId || '';
-
 
         const tbody =
             document.getElementById(
                 'readings-table-body'
             );
-
 
         if (tbody) {
 
@@ -1536,7 +1513,6 @@
                 );
 
         }
-
 
         const name =
             document.getElementById(
@@ -1563,7 +1539,6 @@
                 'current-product-status'
             );
 
-
         if (name)
             name.textContent =
                 state.currentProduct || '—';
@@ -1585,17 +1560,14 @@
                 state.currentStatus ||
                 'En attente';
 
-
         currentProductName =
             state.currentProduct === '—'
                 ? null
                 : state.currentProduct;
 
-
         return state.cameraWasActive === true;
 
     }
-
 
     function restoreAuthFromLocalStorage() {
 
@@ -1607,7 +1579,6 @@
             'valeo_userCode',
             'valeo_isAdmin'
         ];
-
 
         keys.forEach(
             key => {
@@ -1631,7 +1602,6 @@
         );
 
     }
-
 
     function mirrorAuthToLocalStorage() {
 
@@ -1663,16 +1633,10 @@
 
     }
 
-
     let lastFrameSize = {
         width: 0,
         height: 0
     };
-
-
-    // ============================================================
-    // HARDCODED PRODUCTS DATABASE
-    // ============================================================
 
     const productsDatabase = {
 
@@ -1894,7 +1858,6 @@
 
     };
 
-
     function getProductInfo(productName) {
 
         const normalized =
@@ -1903,7 +1866,6 @@
             )
             .trim()
             .toUpperCase();
-
 
         if (
             normalized.includes('CAP CAPA') ||
@@ -1920,7 +1882,6 @@
             }
 
         }
-
 
         for (
             const [key, value]
@@ -1950,11 +1911,9 @@
 
         }
 
-
         console.warn(
             `Produit non trouvé dans la base: "${productName}" (normalized: "${normalized}")`
         );
-
 
         return {
             jigsTotal: 0,
@@ -1964,13 +1923,11 @@
 
     }
 
-
     function parseReadingTimestamp(reading) {
 
         if (!reading) {
             return null;
         }
-
 
         if (
             reading.timestamp &&
@@ -1982,42 +1939,35 @@
                     reading.timestamp
                 );
 
-
             if (!Number.isNaN(ts)) {
                 return ts;
             }
 
         }
 
-
         const dateStr =
             String(
                 reading.date || ''
             ).trim();
-
 
         const timeStr =
             String(
                 reading.heure || ''
             ).trim();
 
-
         if (!dateStr) {
             return null;
         }
-
 
         const dateParts =
             dateStr.split(
                 '/'
             );
 
-
         const timeParts =
             timeStr.split(
                 ':'
             );
-
 
         if (
             dateParts.length < 3
@@ -2025,45 +1975,36 @@
             return null;
         }
 
-
         const [
             day,
             month,
             year
         ] = dateParts;
 
-
         const hour =
             timeParts[0] || '00';
-
 
         const minute =
             timeParts[1] || '00';
 
-
         const second =
             timeParts[2] || '00';
 
-
         const iso =
             `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-
 
         const ts =
             Date.parse(
                 iso
             );
 
-
         if (Number.isNaN(ts)) {
             return null;
         }
 
-
         return ts;
 
     }
-
 
     function calculateTRP() {
 
@@ -2074,9 +2015,7 @@
             return null;
         }
 
-
         const productGroups = {};
-
 
         readings.forEach(
             r => {
@@ -2086,11 +2025,9 @@
                         r.produit || ''
                     ).trim();
 
-
                 if (!product) {
                     return;
                 }
-
 
                 if (
                     !productGroups[
@@ -2107,34 +2044,28 @@
 
                 }
 
-
                 const productInfo =
                     getProductInfo(
                         product
                     );
 
-
                 const kitsPerJig =
                     productInfo?.kits || 0;
-
 
                 const detectedKits =
                     Number(
                         r.quantite || r.jigs_detectees || 0
                     ) * kitsPerJig;
 
-
                 productGroups[
                     product
                 ].totalKits +=
                     detectedKits;
 
-
                 const ts =
                     parseReadingTimestamp(
                         r
                     );
-
 
                 if (ts !== null) {
                     productGroups[
@@ -2147,11 +2078,9 @@
             }
         );
 
-
         let bestProduct = null;
         let bestTRP = null;
         let bestDetails = null;
-
 
         for (
             const [
@@ -2168,10 +2097,8 @@
                     product
                 );
 
-
             const cycleTime =
                 productInfo?.cycleTime;
-
 
             if (
                 !cycleTime ||
@@ -2180,10 +2107,8 @@
                 continue;
             }
 
-
             const timestamps =
                 data.timestamps;
-
 
             if (
                 timestamps.length < 2
@@ -2191,22 +2116,18 @@
                 continue;
             }
 
-
             const minTime =
                 Math.min(
                     ...timestamps
                 );
-
 
             const maxTime =
                 Math.max(
                     ...timestamps
                 );
 
-
             const durationMs =
                 maxTime - minTime;
-
 
             if (
                 durationMs <= 0
@@ -2214,17 +2135,14 @@
                 continue;
             }
 
-
             const durationSeconds =
                 durationMs / 1000;
-
 
             const trp =
                 (
                     (data.totalKits * cycleTime) /
                     durationSeconds
                 ) * 100;
-
 
             const clampedTRP =
                 Math.min(
@@ -2234,7 +2152,6 @@
                         trp
                     )
                 );
-
 
             if (
                 bestTRP === null ||
@@ -2255,13 +2172,11 @@
 
         }
 
-
         if (
             bestTRP === null
         ) {
             return null;
         }
-
 
         return {
             trp: Math.round(
@@ -2273,14 +2188,12 @@
 
     }
 
-
     let scanCounter = 0;
     let sameProductDetectionCount = 0;
 
     window.productTotals = {};
     window.baseReference = {};
     window.baseReferenceIndex = {};
-
 
     function normalizeProductKey(value) {
 
@@ -2309,7 +2222,6 @@
 
     }
 
-
     function buildProductAliasVariants(value) {
 
         const aliases =
@@ -2323,7 +2235,6 @@
         if (!raw)
             return aliases;
 
-
         const normalized =
             normalizeProductKey(
                 raw
@@ -2334,7 +2245,6 @@
                 /[\s_\-/\\]+/g,
                 ''
             );
-
 
         aliases.add(raw);
         aliases.add(normalized);
@@ -2367,12 +2277,10 @@
 
         aliases.add(compact);
 
-
         const tokens =
             normalized
                 .split(' ')
                 .filter(Boolean);
-
 
         if (tokens.length) {
 
@@ -2393,7 +2301,6 @@
             );
 
         }
-
 
         if (tokens.length > 1) {
 
@@ -2423,11 +2330,9 @@
 
         }
 
-
         return aliases;
 
     }
-
 
     function getReferenceQuantityForProduct(productName) {
 
@@ -2440,10 +2345,8 @@
             ] ||
             null;
 
-
         if (!ref)
             return 0;
-
 
         const candidates = [
 
@@ -2465,7 +2368,6 @@
 
         ];
 
-
         for (
             const value
             of candidates
@@ -2485,13 +2387,11 @@
 
         }
 
-
         return Number(
             ref.quantite || 0
         );
 
     }
-
 
     function findReferenceForProduct(productName) {
 
@@ -2508,20 +2408,16 @@
                 productName || ''
             ).trim();
 
-
         if (!name)
             return null;
-
 
         const normalized =
             normalizeProductKey(
                 name
             );
 
-
         if (!normalized)
             return null;
-
 
         const aliasCandidates =
             [
@@ -2529,7 +2425,6 @@
                     name
                 )
             ];
-
 
         for (
             const alias
@@ -2543,7 +2438,6 @@
             if (direct)
                 return direct;
 
-
             const exact =
                 refIndex[
                     normalizeProductKey(
@@ -2556,7 +2450,6 @@
 
         }
 
-
         const candidates =
             Object.keys(
                 refIndex
@@ -2568,25 +2461,21 @@
         let bestScore =
             0;
 
-
         candidates.forEach(
             key => {
 
                 if (!key)
                     return;
 
-
                 const keyTokens =
                     key
                         .split(' ')
                         .filter(Boolean);
 
-
                 const targetTokens =
                     normalized
                         .split(' ')
                         .filter(Boolean);
-
 
                 const exactContains =
                     key.includes(
@@ -2596,7 +2485,6 @@
                         key
                     );
 
-
                 const tokenOverlap =
                     targetTokens.filter(
                         token =>
@@ -2604,7 +2492,6 @@
                                 token
                             )
                     ).length;
-
 
                 const suffixMatch =
                     key.endsWith(
@@ -2614,7 +2501,6 @@
                         key
                     );
 
-
                 const lastTokenMatch =
                     keyTokens.includes(
                         targetTokens[
@@ -2622,26 +2508,20 @@
                         ]
                     );
 
-
                 let score = 0;
-
 
                 if (exactContains)
                     score += 55;
 
-
                 if (suffixMatch)
                     score += 30;
-
 
                 if (lastTokenMatch)
                     score += 25;
 
-
                 if (tokenOverlap > 0)
                     score +=
                         tokenOverlap * 25;
-
 
                 if (score > bestScore) {
 
@@ -2656,13 +2536,11 @@
             }
         );
 
-
         return bestScore >= 20
             ? bestMatch
             : null;
 
     }
-
 
     async function loadBaseDonneesFromServer() {
 
@@ -2673,10 +2551,8 @@
                     '/api/base-donnees'
                 );
 
-
             const payload =
                 await response.json();
-
 
             if (
                 !payload ||
@@ -2693,10 +2569,8 @@
 
             }
 
-
             const refMap = {};
             const refIndex = {};
-
 
             payload.data.forEach(
                 row => {
@@ -2706,10 +2580,8 @@
                             row.produit || ''
                         ).trim();
 
-
                     if (!produit)
                         return;
-
 
                     const quantityCandidates = [
 
@@ -2735,7 +2607,6 @@
 
                     ];
 
-
                     const quantite =
                         quantityCandidates.reduce(
                             (
@@ -2748,7 +2619,6 @@
                                         value
                                     );
 
-
                                 return Number.isFinite(
                                     parsed
                                 ) &&
@@ -2760,7 +2630,6 @@
                             0
                         );
 
-
                     const jigs =
                         Number(
                             row.jigs ||
@@ -2769,7 +2638,6 @@
                             ] ||
                             0
                         );
-
 
                     const kits =
                         Number(
@@ -2780,14 +2648,12 @@
                             0
                         );
 
-
                     const jigs_totales =
                         Number(
                             row.jigs_totales ||
                             row.jigs ||
                             0
                         );
-
 
                     const canonical = {
 
@@ -2819,12 +2685,10 @@
 
                     };
 
-
                     const aliases =
                         buildProductAliasVariants(
                             produit
                         );
-
 
                     aliases.forEach(
                         alias => {
@@ -2834,16 +2698,13 @@
                                     alias || ''
                                 ).trim();
 
-
                             if (!cleanAlias)
                                 return;
-
 
                             refMap[
                                 cleanAlias
                             ] =
                                 canonical;
-
 
                             refIndex[
                                 normalizeProductKey(
@@ -2855,14 +2716,12 @@
                         }
                     );
 
-
                     refMap[
                         normalizeProductKey(
                             produit
                         )
                     ] =
                         canonical;
-
 
                     refIndex[
                         normalizeProductKey(
@@ -2874,13 +2733,11 @@
                 }
             );
 
-
             window.baseReference =
                 refMap;
 
             window.baseReferenceIndex =
                 refIndex;
-
 
             calculateStats();
 
@@ -2898,16 +2755,10 @@
 
     }
 
-
-    // ============================================================
-    // CLOCK
-    // ============================================================
-
     function updateClock() {
 
         const now =
             new Date();
-
 
         document.getElementById(
             'current-date'
@@ -2915,7 +2766,6 @@
             now.toLocaleDateString(
                 'fr-FR'
             );
-
 
         document.getElementById(
             'current-time'
@@ -2926,25 +2776,17 @@
 
     }
 
-
     setInterval(
         updateClock,
         1000
     );
 
-
     updateClock();
-
-
-    // ============================================================
-    // USER INFO
-    // ============================================================
 
     document.addEventListener(
         'DOMContentLoaded',
         function() {
 
-            // The dashboard is available only after a successful login.
             if (
                 !sessionStorage.getItem(
                     'valeo_userId'
@@ -2959,10 +2801,7 @@
 
             }
 
-
-            // Keep the authenticated user available between pages.
             mirrorAuthToLocalStorage();
-
 
             const userName =
                 sessionStorage.getItem(
@@ -2970,13 +2809,11 @@
                 ) ||
                 'Utilisateur';
 
-
             const userCode =
                 sessionStorage.getItem(
                     'valeo_userCode'
                 ) ||
                 '';
-
 
             const userEmail =
                 sessionStorage.getItem(
@@ -2984,13 +2821,11 @@
                 ) ||
                 '';
 
-
             const userRole =
                 sessionStorage.getItem(
                     'valeo_userRole'
                 ) ||
                 '';
-
 
             document.getElementById(
                 'userDisplay'
@@ -2998,12 +2833,10 @@
                 userCode ||
                 userName;
 
-
             document.getElementById(
                 'dropdownName'
             ).textContent =
                 userName;
-
 
             document.getElementById(
                 'dropdownRole'
@@ -3011,25 +2844,21 @@
                 userRole ||
                 '—';
 
-
             document.getElementById(
                 'dropdownEmail'
             ).textContent =
                 userEmail ||
                 '—';
 
-
             const isAdmin =
                 sessionStorage.getItem(
                     'valeo_isAdmin'
                 ) === 'true';
 
-
             const navAdmin =
                 document.getElementById(
                     'navAdmin'
                 );
-
 
             if (
                 navAdmin &&
@@ -3041,20 +2870,15 @@
 
             }
 
-
-            // Account dropdown
-
             const accountBtn =
                 document.getElementById(
                     'accountBtn'
                 );
 
-
             const dropdown =
                 document.getElementById(
                     'accountDropdown'
                 );
-
 
             if (accountBtn) {
 
@@ -3071,7 +2895,6 @@
                     }
                 );
 
-
                 document.addEventListener(
                     'click',
                     function() {
@@ -3082,7 +2905,6 @@
 
                     }
                 );
-
 
                 dropdown.addEventListener(
                     'click',
@@ -3095,27 +2917,19 @@
 
             }
 
-
             initChart();
 
             loadBaseDonneesFromServer();
 
-
-            // Restore dashboard state.
             const shouldReactivateCamera =
                 restoreDashboardState();
-
 
             updateCameraStatus(
                 false
             );
 
-
             refreshCameraDevices();
 
-
-            // Restore camera automatically if it was active
-            // before navigating to Historique.
             if (
                 shouldReactivateCamera
             ) {
@@ -3131,11 +2945,6 @@
 
         }
     );
-
-
-    // ============================================================
-    // LOGOUT
-    // ============================================================
 
     function logout() {
 
@@ -3163,7 +2972,6 @@
             'valeo_isAdmin'
         );
 
-
         [
             'valeo_userName',
             'valeo_userEmail',
@@ -3179,21 +2987,14 @@
                 )
         );
 
-
         localStorage.removeItem(
             DASHBOARD_STATE_KEY
         );
-
 
         window.location.href =
             'login.html';
 
     }
-
-
-    // ============================================================
-    // CAMERA STATUS
-    // ============================================================
 
     function updateCameraStatus(
         active
@@ -3202,28 +3003,23 @@
         cameraActive =
             active;
 
-
         const noSignal =
             document.getElementById(
                 'no-signal-overlay'
             );
-
 
         const badge =
             document.getElementById(
                 'cam-simulation-badge'
             );
 
-
         if (active) {
 
             noSignal.style.display =
                 'none';
 
-
             badge.textContent =
                 'Camera Activée';
-
 
             badge.className =
                 'badge badge-green';
@@ -3233,10 +3029,8 @@
             noSignal.style.display =
                 'flex';
 
-
             badge.textContent =
                 'Caméra inactive';
-
 
             badge.className =
                 'badge badge-amber';
@@ -3245,11 +3039,6 @@
 
     }
 
-
-    // ============================================================
-    // CHART
-    // ============================================================
-
     function initChart() {
 
         const canvas =
@@ -3257,19 +3046,14 @@
                 'volumeChart'
             );
 
-
-        // Your current dashboard may not contain the chart canvas.
-        // Do not crash the whole dashboard if it is absent.
         if (!canvas) {
             return;
         }
-
 
         const ctx =
             canvas.getContext(
                 '2d'
             );
-
 
         chartInstance =
             new Chart(
@@ -3307,7 +3091,6 @@
                         }]
 
                     },
-
 
                     options: {
 
@@ -3347,7 +3130,6 @@
 
                             },
 
-
                             y: {
 
                                 grid: {
@@ -3374,11 +3156,6 @@
             );
 
     }
-
-
-    // ============================================================
-    // STATS
-    // ============================================================
 
     function getDashboardTotalQuantity() {
         const productMap = {};
@@ -3411,7 +3188,6 @@
 
         const productMap = {};
 
-
         readings.forEach(
             r => {
 
@@ -3420,11 +3196,9 @@
                         r.produit || ''
                     ).trim();
 
-
                 if (!product) {
                     return;
                 }
-
 
                 if (
                     !productMap[product]
@@ -3435,7 +3209,6 @@
 
                 }
 
-
                 productMap[product] +=
                     Number(
                         r.jigs_detectees ?? 0
@@ -3443,7 +3216,6 @@
 
             }
         );
-
 
         const totalJigsDetected =
             Object.values(
@@ -3458,9 +3230,7 @@
                 0
             );
 
-
         const totalQuantity = getDashboardTotalQuantity();
-
 
         console.log(
             'Total quantity (kits):',
@@ -3471,10 +3241,8 @@
             readings.length
         );
 
-
         const trpResult =
             calculateTRP();
-
 
         const productList =
             Object.entries(
@@ -3485,11 +3253,9 @@
                     b[1] - a[1]
             );
 
-
         const latestProduct =
             productList[0]?.[0] ||
             '—';
-
 
         const referenceEntry =
             findReferenceForProduct(
@@ -3500,18 +3266,15 @@
             ] ||
             null;
 
-
         const currentDetected =
             productMap[
                 latestProduct
             ] || 0;
 
-
         const currentTarget =
             getReferenceQuantityForProduct(
                 latestProduct
             );
-
 
         const currentLoad =
             currentTarget > 0
@@ -3522,7 +3285,6 @@
                     ) * 100
                 )
                 : 0;
-
 
         const yieldValues =
             readings
@@ -3547,7 +3309,6 @@
                         !isNaN(v)
                 );
 
-
         const avgYield =
             yieldValues.length > 0
                 ? Math.round(
@@ -3562,18 +3323,15 @@
                 )
                 : 0;
 
-
         const totalTargetEl =
             document.getElementById(
                 'val-total-target'
             );
 
-
         const yieldEl =
             document.getElementById(
                 'val-yield'
             );
-
 
         if (totalTargetEl) {
             console.log(
@@ -3594,17 +3352,14 @@
             );
         }
 
-
         if (yieldEl)
             yieldEl.textContent =
                 `${avgYield}%`;
-
 
         const trpEl =
             document.getElementById(
                 'val-trp'
             );
-
 
         if (trpEl) {
 
@@ -3624,7 +3379,6 @@
             }
 
         }
-
 
         const alertPanel =
             document.getElementById(
@@ -3647,7 +3401,6 @@
                     ).replace('%', '')
                 )
                 : null;
-
 
         if (
             alertPanel &&
@@ -3674,51 +3427,42 @@
 
         }
 
-
         const jigs =
             referenceEntry?.jigs ||
             0;
 
-
         const kits =
             referenceEntry?.kits ||
             0;
-
 
         const currentNameEl =
             document.getElementById(
                 'current-product-name'
             );
 
-
         const currentFamilyEl =
             document.getElementById(
                 'current-product-family'
             );
-
 
         const currentQtyEl =
             document.getElementById(
                 'current-product-qty'
             );
 
-
         const currentLoadEl =
             document.getElementById(
                 'current-product-load'
             );
-
 
         const currentStatusEl =
             document.getElementById(
                 'current-product-status'
             );
 
-
         if (currentNameEl)
             currentNameEl.textContent =
                 latestProduct;
-
 
         if (currentFamilyEl)
             currentFamilyEl.textContent =
@@ -3728,11 +3472,9 @@
                 ).famille ||
                 '—';
 
-
         if (currentQtyEl)
             currentQtyEl.textContent =
                 currentDetected || 0;
-
 
         if (currentLoadEl)
             currentLoadEl.textContent =
@@ -3740,7 +3482,6 @@
                     100,
                     currentLoad
                 )}%`;
-
 
         if (currentStatusEl) {
 
@@ -3753,7 +3494,6 @@
                             : 'En cours'
                     );
 
-
             currentStatusEl.className =
                 latestProduct === '—'
                     ? 'badge badge-amber'
@@ -3765,13 +3505,7 @@
 
         }
 
-
     }
-
-
-    // ============================================================
-    // CAPTURED QUANTITY HELPERS
-    // ============================================================
 
     function getCapturedQuantityFromCountMap(
         countMap
@@ -3794,11 +3528,6 @@
 
     }
 
-
-    // ============================================================
-    // RENDER DETECTIONS
-    // ============================================================
-
     function renderDetections(
         detections
     ) {
@@ -3808,14 +3537,11 @@
                 'detection-overlay'
             );
 
-
         overlay.innerHTML =
             '';
 
-
         const display =
             overlay.getBoundingClientRect();
-
 
         const scaleX =
             lastFrameSize.width
@@ -3823,13 +3549,11 @@
                   lastFrameSize.width
                 : 1;
 
-
         const scaleY =
             lastFrameSize.height
                 ? display.height /
                   lastFrameSize.height
                 : 1;
-
 
         detections.forEach(
             detection => {
@@ -3850,16 +3574,13 @@
 
                 }
 
-
                 const box =
                     document.createElement(
                         'div'
                     );
 
-
                 box.className =
                     'detection-box';
-
 
                 box.style.left =
                     `${
@@ -3870,7 +3591,6 @@
                         scaleX
                     }px`;
 
-
                 box.style.top =
                     `${
                         (
@@ -3880,13 +3600,11 @@
                         scaleY
                     }px`;
 
-
                 box.style.width =
                     `${
                         detection.width *
                         scaleX
                     }px`;
-
 
                 box.style.height =
                     `${
@@ -3894,25 +3612,20 @@
                         scaleY
                     }px`;
 
-
                 const label =
                     document.createElement(
                         'span'
                     );
 
-
                 label.className =
                     'detection-box-label';
-
 
                 label.textContent =
                     `${detection.product}`;
 
-
                 box.appendChild(
                     label
                 );
-
 
                 overlay.appendChild(
                     box
@@ -3923,18 +3636,12 @@
 
     }
 
-
-    // ============================================================
-    // CAPTURE ONE FRAME
-    // ============================================================
-
     function captureFrame() {
 
         const video =
             document.getElementById(
                 'camera-video'
             );
-
 
         if (
             !video.videoWidth ||
@@ -3945,20 +3652,16 @@
 
         }
 
-
         const canvas =
             document.createElement(
                 'canvas'
             );
 
-
         canvas.width =
             video.videoWidth;
 
-
         canvas.height =
             video.videoHeight;
-
 
         lastFrameSize = {
 
@@ -3970,7 +3673,6 @@
 
         };
 
-
         canvas
             .getContext('2d')
             .drawImage(
@@ -3981,14 +3683,12 @@
                 canvas.height
             );
 
-
         return canvas.toDataURL(
             'image/jpeg',
             0.82
         );
 
     }
-
 
     function freezeCapturedFrame() {
 
@@ -3997,9 +3697,7 @@
                 'camera-video'
             );
 
-
         video.pause();
-
 
         document.getElementById(
             'cam-rec-indicator'
@@ -4008,9 +3706,6 @@
 
     }
 
-
-    // Leave the detection result visible briefly,
-    // then return to the live feed ready for next capture.
     async function resumeCameraPreview() {
 
         if (
@@ -4022,17 +3717,14 @@
 
         }
 
-
         const video =
             document.getElementById(
                 'camera-video'
             );
 
-
         try {
 
             await video.play();
-
 
             document.getElementById(
                 'cam-rec-indicator'
@@ -4050,18 +3742,12 @@
 
     }
 
-
-    // ============================================================
-    // DETECTION RESPONSE PROCESSOR
-    // ============================================================
-
     async function processDetectionResponse(data) {
 
         console.log(
             'Detection response:',
             data
         );
-
 
         if (!data.success) {
 
@@ -4072,27 +3758,22 @@
 
         }
 
-
         const captureName =
             data.capture ||
             'capture.jpg';
-
 
         document.getElementById(
             'cam-stats-overlay'
         ).textContent =
             `📸 Capture: ${captureName}`;
 
-
         const detections =
             data.detections ||
             [];
 
-
         const jigDetections =
             data.jig_detections ||
             [];
-
 
         renderDetections(
             [
@@ -4101,9 +3782,7 @@
             ]
         );
 
-        // Les cadres sont temporaires : ils seront nettoyés après affichage du résultat.
         setTimeout(clearDetectionBoxes, 1500);
-
 
         const countText =
             Object.entries(
@@ -4122,14 +3801,12 @@
                 ' | '
             );
 
-
         const jigText =
             detections.length
                 ? `Jigs: ${
                     data.jig_count || 0
                 }`
                 : '';
-
 
         document.getElementById(
             'cam-stats-overlay'
@@ -4145,18 +3822,15 @@
             ) ||
             'Aucun produit >= 40%';
 
-
         const detectedProducts =
             Object.keys(
                 data.counts || {}
             );
 
-
         const firstProduct =
             detectedProducts.length > 0
                 ? detectedProducts[0]
                 : null;
-
 
         const detectedQuantity =
             firstProduct
@@ -4167,12 +3841,10 @@
                 )
                 : 0;
 
-
         const productNameEl =
             document.getElementById(
                 'info-product-name'
             );
-
 
         if (productNameEl) {
 
@@ -4182,12 +3854,10 @@
 
         }
 
-
         const loadPercentageEl =
             document.getElementById(
                 'info-load-percentage'
             );
-
 
         if (
             loadPercentageEl &&
@@ -4203,14 +3873,12 @@
                 ] ||
                 null;
 
-
             const jigsTotal =
                 Number(
                     refRow?.jigs_totales ||
                     refRow?.jigs ||
                     0
                 );
-
 
             const loadPercent =
                 jigsTotal > 0
@@ -4225,7 +3893,6 @@
                     )
                     : 0;
 
-
             loadPercentageEl.textContent =
                 `${loadPercent}%`;
 
@@ -4237,7 +3904,6 @@
                 '-';
 
         }
-
 
         if (
             detections.length ||
@@ -4256,7 +3922,6 @@
 
             const now =
                 new Date();
-
 
             const reading = {
 
@@ -4295,31 +3960,22 @@
 
             };
 
-
             readings.unshift(
                 reading
             );
-
 
             insertRow(
                 reading,
                 true
             );
 
-
             calculateStats();
-
 
             saveDashboardState();
 
         }
 
     }
-
-
-    // ============================================================
-    // IMPORT PHOTO
-    // ============================================================
 
     async function importPhoto(event) {
         const file = event.target.files[0];
@@ -4354,16 +4010,11 @@
             const stats = document.getElementById('cam-stats-overlay');
             if (stats) stats.textContent = '📁 Image importée — appuyez sur « Déclencher la détection »';
 
-            // IMPORTANT : aucune détection automatique ici.
             event.target.value = '';
         };
 
         reader.readAsDataURL(file);
     }
-
-    // ============================================================
-    // RECORD DETECTIONS
-    // ============================================================
 
     function normalizeQuantityValue(
         value
@@ -4379,7 +4030,6 @@
 
         }
 
-
         if (
             typeof value === 'number'
         ) {
@@ -4392,7 +4042,6 @@
 
         }
 
-
         const sanitized =
             String(value)
                 .replace(
@@ -4404,12 +4053,10 @@
                     '.'
                 );
 
-
         const parsed =
             Number(
                 sanitized
             );
-
 
         return Number.isFinite(
             parsed
@@ -4418,7 +4065,6 @@
             : 0;
 
     }
-
 
     function normalizeHeader(
         label
@@ -4445,7 +4091,6 @@
 
     }
 
-
     function getCellByAliases(
         row,
         aliases
@@ -4455,7 +4100,6 @@
             Object.keys(
                 row || {}
             );
-
 
         for (
             const key
@@ -4467,7 +4111,6 @@
                     key
                 );
 
-
             const match =
                 aliases.some(
                     alias =>
@@ -4475,7 +4118,6 @@
                             alias
                         )
                 );
-
 
             if (match) {
 
@@ -4488,7 +4130,6 @@
         return undefined;
 
     }
-
 
     async function generateProductionXML(productNo, eventDateTime, quantity) {
         try {
@@ -4544,12 +4185,9 @@
             jigCount
         );
 
-
         const now =
             new Date();
 
-
-        // Déterminer le premier produit détecté
         const detectedProducts =
             Object.keys(
                 counts || {}
@@ -4594,18 +4232,14 @@
                 )
                 : 0;
 
-
-        // Normaliser le nom du produit pour comparaison
         const normalizedProduct = String(product || '').trim().toUpperCase();
 
-        // Si le produit a changé, réinitialiser l'état
         if (currentProductName !== normalizedProduct) {
             sameProductDetectionCount = 0;
             consecutiveEmptyCount = 0;
             window.__valeoAutoSaved = false;
         }
 
-        // Si le produit a changé, enregistrer le produit précédent dans l'historique
         if (
             currentProductName &&
             currentProductName !== normalizedProduct &&
@@ -4646,31 +4280,26 @@
             );
         }
 
-        // Mettre à jour le compteur de détections du même produit
         if (currentProductName === normalizedProduct) {
             sameProductDetectionCount++;
         } else {
             sameProductDetectionCount = 1;
         }
 
-        // Mettre à jour le compteur de balancelles vides
         if (jigsDetected === 0 && currentProductName) {
             consecutiveEmptyCount++;
         } else if (jigsDetected > 0) {
             consecutiveEmptyCount = 0;
         }
 
-        // Mettre à jour le produit actuel (normalisé)
         currentProductName = normalizedProduct;
 
-        // Mettre à jour les totaux uniquement si jig détecté
         if (jigsDetected > 0) {
 
             window.productTotals[product] =
                 (window.productTotals[product] || 0) + quantity;
 
         }
-
 
         const reading = {
 
@@ -4714,7 +4343,6 @@
 
         };
 
-
         console.log(
             `Adding row:`,
             reading
@@ -4724,12 +4352,10 @@
             reading
         );
 
-
         insertRow(
             reading,
             true
         );
-
 
         readings =
             readings.slice(
@@ -4737,17 +4363,16 @@
                 50
             );
 
-
         calculateStats();
 
         if (jigsDetected > 0) {
-            const dashboardTotalQuantity =
-                getDashboardTotalQuantity();
+            const kitsPerJig = Number(productInfo?.kits) || 0;
+            const xmlQuantity = jigsDetected * kitsPerJig;
 
             generateProductionXML(
                 reading.produit,
                 now.toISOString(),
-                dashboardTotalQuantity
+                xmlQuantity
             );
         }
 
@@ -4755,8 +4380,6 @@
 
         saveDashboardState();
 
-
-        // Fin de cycle : 5 balancelles vides consécutives
         const lastReading = readings[0];
         const currentRendement = parseFloat(String(lastReading?.taux || '0').replace('%', ''));
         const isLowRendement = !isNaN(currentRendement) && currentRendement < 90;
@@ -4798,18 +4421,12 @@
 
         }
 
-
         console.log(
             '✓ recordDetections complete, readings count:',
             readings.length
         );
 
     }
-
-
-    // ============================================================
-    // TEST DETECTION
-    // ============================================================
 
     window.testDetection =
         async function() {
@@ -4818,14 +4435,12 @@
                 '🧪 Testing detection system...'
             );
 
-
             try {
 
                 const testProducts =
                     Object.keys(
                         productsDatabase
                     );
-
 
                 const randomProduct =
                     testProducts[
@@ -4835,15 +4450,12 @@
                         )
                     ];
 
-
                 const testCount =
                     5;
-
 
                 console.log(
                     `✓ Test product: ${randomProduct}`
                 );
-
 
                 const testData = {
 
@@ -4882,23 +4494,19 @@
 
                 };
 
-
                 console.log(
                     'Test data:',
                     testData
                 );
 
-
                 console.log(
                     '✓ Adding to table...'
                 );
-
 
                 recordDetections(
                     testData.counts,
                     testData.detections
                 );
-
 
                 console.log(
                     '✓ Test complete! Check the table.'
@@ -4915,20 +4523,12 @@
 
         };
 
-
-    // ============================================================
-    // SENSOR TRIGGER
-    // ONE CLICK = ONE PHOTO
-    // ============================================================
-
     async function triggerSensor() {
 
         if (detectionInProgress) {
             return;
         }
 
-        // Une image importée est prioritaire et peut être analysée
-        // même si la caméra est inactive.
         let frame = importedImageData;
         const usingImportedImage = !!frame;
 
@@ -4948,7 +4548,6 @@
             freezeCapturedFrame();
         }
 
-
         if (!frame) {
 
             alert(
@@ -4959,30 +4558,21 @@
 
         }
 
-
         const button =
             document.getElementById(
                 'sensor-trigger-btn'
             );
 
-
         button.disabled =
             true;
 
-
         button.innerHTML =
             '<i class="fa-solid fa-spinner fa-spin"></i> Capture...';
-
-
-        // Ne pas masquer l'image importée pendant sa détection.
-        // Elle reste la source visuelle jusqu'à un nouvel import ou
-        // jusqu'à l'activation de la caméra.
 
         try {
 
             detectionInProgress =
                 true;
-
 
             const response =
                 await fetch(
@@ -5009,15 +4599,12 @@
                     }
                 );
 
-
             const data =
                 await response.json();
-
 
             await processDetectionResponse(
                 data
             );
-
 
         } catch (error) {
 
@@ -5026,17 +4613,13 @@
                 error
             );
 
-
             document.getElementById(
                 'cam-stats-overlay'
             ).textContent =
                 `ERREUR IA: ${error.message}`;
 
-
         } finally {
 
-            // Garder l'image capturée et l'analyse visibles
-            // pendant 3.5 secondes avant de revenir au live.
             await new Promise(
                 resolve =>
                     setTimeout(
@@ -5045,22 +4628,15 @@
                     )
             );
 
-
-            // Si la détection concernait une image importée,
-            // ne pas réactiver automatiquement la caméra.
-            // Le LIVE ne reprend que lorsque l'utilisateur appuie sur ACTIVER.
             if (!usingImportedImage) {
                 await resumeCameraPreview();
             }
 
-
             detectionInProgress =
                 false;
 
-
             button.disabled =
                 false;
-
 
             button.innerHTML =
                 '<i class="fa-solid fa-radar"></i> Déclencher la détection';
@@ -5068,11 +4644,6 @@
         }
 
     }
-
-
-    // ============================================================
-    // CHART UPDATE
-    // ============================================================
 
     function updateChart() {
 
@@ -5082,7 +4653,6 @@
 
         }
 
-
         const recent =
             [...readings]
                 .slice(
@@ -5091,13 +4661,11 @@
                 )
                 .reverse();
 
-
         chartInstance.data.labels =
             recent.map(
                 r =>
                     r.heure
             );
-
 
         chartInstance.data.datasets[0].data =
             recent.map(
@@ -5105,15 +4673,9 @@
                     r.quantite
             );
 
-
         chartInstance.update();
 
     }
-
-
-    // ============================================================
-    // TABLE
-    // ============================================================
 
     function insertRow(
         r,
@@ -5125,16 +4687,13 @@
                 'readings-table-body'
             );
 
-
         if (!tbody)
             return;
-
 
         const tr =
             document.createElement(
                 'tr'
             );
-
 
         if (isNew) {
 
@@ -5143,12 +4702,10 @@
 
         }
 
-
         const jigsDetected =
             Number(
                 r.jigs_detectees || r.quantite || 0
             );
-
 
         const jigsTotal =
             Number(
@@ -5157,7 +4714,6 @@
             getProductInfo(
                 r.produit
             ).jigsTotal;
-
 
         const rateVal =
             jigsTotal > 0
@@ -5172,10 +4728,8 @@
                 )
                 : 0;
 
-
         let badgeClass =
             'badge-lime';
-
 
         if (
             rateVal >= 100
@@ -5193,14 +4747,12 @@
 
         }
 
-
         const fillClass =
             rateVal >= 100
                 ? 'green'
                 : rateVal > 50
                     ? 'amber'
                     : 'lime';
-
 
         tr.innerHTML = `
 
@@ -5258,7 +4810,6 @@
 
         `;
 
-
         if (
             tbody.children.length === 0
         ) {
@@ -5276,7 +4827,6 @@
 
         }
 
-
         if (
             tbody.children.length > 50
         ) {
@@ -5289,18 +4839,12 @@
 
     }
 
-
-    // ============================================================
-    // CAMERA
-    // ============================================================
-
     async function refreshCameraDevices() {
 
         const select =
             document.getElementById(
                 'camera-device-select'
             );
-
 
         if (
             !select ||
@@ -5311,16 +4855,13 @@
 
         }
 
-
         const currentValue =
             selectedCameraId ||
             select.value;
 
-
         const devices =
             await navigator.mediaDevices
                 .enumerateDevices();
-
 
         const cameras =
             devices.filter(
@@ -5329,10 +4870,8 @@
                     'videoinput'
             );
 
-
         select.innerHTML =
             '<option value="">Caméra par défaut</option>';
-
 
         cameras.forEach(
             (
@@ -5345,15 +4884,12 @@
                         'option'
                     );
 
-
                 option.value =
                     camera.deviceId;
-
 
                 option.textContent =
                     camera.label ||
                     `Caméra ${index + 1}`;
-
 
                 select.appendChild(
                     option
@@ -5361,7 +4897,6 @@
 
             }
         );
-
 
         if (
             currentValue &&
@@ -5379,7 +4914,6 @@
 
     }
 
-
     async function changeCameraDevice() {
 
         selectedCameraId =
@@ -5387,13 +4921,11 @@
                 'camera-device-select'
             ).value;
 
-
         if (cameraActive) {
 
             await toggleCamera(
                 false
             );
-
 
             await toggleCamera(
                 true
@@ -5403,7 +4935,6 @@
 
     }
 
-
     async function toggleCamera(
         state
     ) {
@@ -5412,7 +4943,6 @@
             document.getElementById(
                 'camera-video'
             );
-
 
         if (
             state &&
@@ -5440,8 +4970,6 @@
 
                 };
 
-
-                // Use the selected camera when available.
                 if (
                     selectedCameraId
                 ) {
@@ -5453,7 +4981,6 @@
 
                 }
 
-
                 mediaStream =
                     await navigator
                         .mediaDevices
@@ -5461,20 +4988,16 @@
                             constraints
                         );
 
-
                 video.srcObject =
                     mediaStream;
 
-
                 video.style.display =
                     'block';
-
 
                 const previewImg =
                     document.getElementById(
                         'imported-photo-preview'
                     );
-
 
                 if (previewImg) {
 
@@ -5483,38 +5006,30 @@
 
                 }
 
-
-                // Device names are available after permission.
                 await refreshCameraDevices();
-
 
             } catch (error) {
 
                 mediaStream =
                     null;
 
-
                 updateCameraStatus(
                     false
                 );
-
 
                 alert(
                     'Impossible d’accéder à la caméra. Autorisez son utilisation puis réessayez.'
                 );
 
-
                 console.error(
                     error
                 );
-
 
                 return;
 
             }
 
         }
-
 
         if (
             !state &&
@@ -5528,20 +5043,16 @@
                         track.stop()
                 );
 
-
             mediaStream =
                 null;
 
-
             video.srcObject =
                 null;
-
 
             video.style.display =
                 'none';
 
         }
-
 
         if (
             state &&
@@ -5564,7 +5075,6 @@
 
             await video.play();
 
-
             document.getElementById(
                 'cam-rec-indicator'
             ).innerHTML =
@@ -5572,18 +5082,11 @@
 
         }
 
-
         updateCameraStatus(
             state
         );
 
-
-        // IMPORTANT:
-        // Save camera state immediately.
-        // This is what allows Dashboard -> Historique -> Dashboard
-        // to restore the camera.
         saveDashboardState();
-
 
         if (!state) {
 
@@ -5592,12 +5095,10 @@
             ).innerHTML =
                 '';
 
-
             document.getElementById(
                 'cam-stats-overlay'
             ).textContent =
                 'NO SIGNAL';
-
 
             const infoScanId =
                 document.getElementById(
@@ -5608,7 +5109,6 @@
                 infoScanId.textContent =
                     '-';
 
-
             const infoQty =
                 document.getElementById(
                     'info-qty'
@@ -5617,7 +5117,6 @@
             if (infoQty)
                 infoQty.textContent =
                     '-';
-
 
             const infoRate =
                 document.getElementById(
@@ -5628,7 +5127,6 @@
                 infoRate.textContent =
                     '-';
 
-
             const infoTrp =
                 document.getElementById(
                     'info-trp'
@@ -5637,7 +5135,6 @@
             if (infoTrp)
                 infoTrp.textContent =
                     '-';
-
 
             const infoStatus =
                 document.getElementById(
@@ -5652,11 +5149,6 @@
 
     }
 
-
-    // ============================================================
-    // SAVE STATE BEFORE LEAVING DASHBOARD
-    // ============================================================
-
     window.addEventListener(
         'pagehide',
         function() {
@@ -5667,6 +5159,7 @@
     );
 
 </script>
+
 
     <script src="js/camera-status.js"></script>
 
