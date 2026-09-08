@@ -12,11 +12,11 @@
 </Inputs>
 <Inputs>
 <InputName>ProductNo</InputName>
-<InputValue>DECOPART</InputValue>
+<InputValue>BEL_MATE</InputValue>
 </Inputs>
 <Inputs>
 <InputName>EventDateTime</InputName>
-<InputValue>9/5/2026 11:05 AM</InputValue>
+<InputValue>9/8/2026 12:35 PM</InputValue>
 </Inputs>
 <Inputs>
 <InputName>SerialNo</InputName>
@@ -24,7 +24,7 @@
 </Inputs>
 <Inputs>
 <InputName>Quantity</InputName>
-<InputValue>48</InputValue>
+<InputValue>105</InputValue>
 </Inputs>
 <Inputs>
 <InputName>CycleTime</InputName>

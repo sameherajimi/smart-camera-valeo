@@ -31,19 +31,26 @@ const pythonCommand =
 const app = express();
 const PORT = 3000;
 
-const capturesDirectory = path.join(__dirname, 'captures');
-const HISTORY_FILE = path.join(__dirname, 'history.json');
+const capturesDirectory =
+    path.join(__dirname, 'captures');
 
+const HISTORY_FILE =
+    path.join(__dirname, 'history.json');
 
-// ============================================================
-// GENERATION DES FICHIERS XML DE PRODUCTION
-// ============================================================
 const XML_DIRECTORY =
     process.env.VALEO_XML_DIRECTORY ||
     path.join(__dirname, 'xml');
 
 const XML_SCHEMA_PATH =
     'C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd';
+
+const BASE_DATA_PATH =
+    process.env.VALEO_BASE_DATA_PATH ||
+    path.join(
+        process.env.USERPROFILE || '',
+        'Downloads',
+        'BASE DONNEES (1).xlsx'
+    );
 
 function escapeXml(value) {
     return String(value ?? '')
@@ -55,7 +62,9 @@ function escapeXml(value) {
 }
 
 function formatXmlDateTime(value) {
-    const date = value ? new Date(value) : new Date();
+    const date = value
+        ? new Date(value)
+        : new Date();
 
     if (Number.isNaN(date.getTime())) {
         return formatXmlDateTime(new Date());
@@ -66,14 +75,23 @@ function formatXmlDateTime(value) {
     const year = date.getFullYear();
 
     let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    const minutes =
+        String(date.getMinutes()).padStart(2, '0');
+
+    const ampm =
+        hours >= 12 ? 'PM' : 'AM';
+
     hours = hours % 12 || 12;
 
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
 }
 
-function buildProductionXml(productNo, eventDateTime, quantityTotal) {
+function buildProductionXml(
+    productNo,
+    eventDateTime,
+    quantityTotal
+) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <FSA_INT_FlatFileManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="${XML_SCHEMA_PATH}" Version="1.0">
 <FIInvocationSynchronousEvent NodeType="FIInvocation">
@@ -111,20 +129,19 @@ function buildProductionXml(productNo, eventDateTime, quantityTotal) {
 </FSA_INT_FlatFileManager>`;
 }
 
-process.env.VALEO_ROBOFLOW_API_KEY =
-    process.env.VALEO_ROBOFLOW_API_KEY || 'dQudu2taTYXhZN8DmqZo';
-
-const BASE_DATA_PATH =
-    process.env.VALEO_BASE_DATA_PATH ||
-    path.join(
-        process.env.USERPROFILE || '',
-        'Downloads',
-        'BASE DONNEES (1).xlsx'
-    );
-
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '..')));
+
+app.use(
+    express.json({
+        limit: '10mb'
+    })
+);
+
+app.use(
+    express.static(
+        path.join(__dirname, '..')
+    )
+);
 
 function normalizeHeader(value) {
     return String(value || '')
@@ -137,137 +154,242 @@ function normalizeHeader(value) {
 }
 
 function normalizeNumeric(value) {
-    if (value === null || value === undefined || value === '') {
+    if (
+        value === null ||
+        value === undefined ||
+        value === ''
+    ) {
         return 0;
     }
 
     if (typeof value === 'number') {
-        return Number.isFinite(value) ? value : 0;
+        return Number.isFinite(value)
+            ? value
+            : 0;
     }
 
-    const cleaned = String(value)
-        .replace(/[^0-9.,-]/g, '')
-        .replace(',', '.');
+    const cleaned =
+        String(value)
+            .replace(/[^0-9.,-]/g, '')
+            .replace(',', '.');
 
-    const parsed = Number(cleaned);
+    const parsed =
+        Number(cleaned);
 
-    return Number.isFinite(parsed) ? parsed : 0;
+    return Number.isFinite(parsed)
+        ? parsed
+        : 0;
 }
 
 function readBaseDonneesFromExcel(filePath) {
-    if (!filePath || !fsSync.existsSync(filePath)) {
+    if (
+        !filePath ||
+        !fsSync.existsSync(filePath)
+    ) {
         return [];
     }
 
-    const workbook = XLSX.readFile(filePath);
+    const workbook =
+        XLSX.readFile(filePath);
 
     const sheetName =
-        workbook.SheetNames.find(name => /table/i.test(name));
+        workbook.SheetNames.find(
+            name => /table/i.test(name)
+        );
 
     const targetSheet =
         workbook.Sheets['Table'] ||
-        (sheetName ? workbook.Sheets[sheetName] : null);
+        (
+            sheetName
+                ? workbook.Sheets[sheetName]
+                : null
+        );
 
     if (!targetSheet) {
         return [];
     }
 
-    const rowsArray = XLSX.utils.sheet_to_json(
-        targetSheet,
-        {
-            header: 1,
-            defval: '',
-            raw: false
-        }
-    );
+    const rowsArray =
+        XLSX.utils.sheet_to_json(
+            targetSheet,
+            {
+                header: 1,
+                defval: '',
+                raw: false
+            }
+        );
 
-    if (!rowsArray || rowsArray.length < 3) {
+    if (
+        !rowsArray ||
+        rowsArray.length < 3
+    ) {
         return [];
     }
 
     const rows = [];
     const seen = new Set();
 
-    rowsArray.slice(2).forEach(row => {
-        if (!Array.isArray(row)) {
-            return;
-        }
-
-        const family = String(row[1] || '').trim();
-        const product = String(row[2] || '').trim();
-
-        const totalValue =
-            row[5] ?? row[4] ?? row[6] ?? 0;
-
-        const quantite = normalizeNumeric(totalValue);
-        const jigsTotales = normalizeNumeric(row[4] || 0);
-
-        if (!product && !family) {
-            return;
-        }
-
-        if (!(quantite > 0)) {
-            return;
-        }
-
-        const aliases = new Set();
-
-        if (product) {
-            aliases.add(product);
-        }
-
-        if (family && product) {
-            aliases.add(`${family} ${product}`);
-            aliases.add(`${family}_${product}`);
-        }
-
-        if (family && !product) {
-            aliases.add(family);
-        }
-
-        aliases.forEach(alias => {
-            const cleanAlias = String(alias).trim();
-
-            if (!cleanAlias) {
+    rowsArray
+        .slice(2)
+        .forEach(row => {
+            if (!Array.isArray(row)) {
                 return;
             }
 
-            const key = `Table|${cleanAlias}`;
+            const family =
+                String(row[1] || '').trim();
 
-            if (seen.has(key)) {
+            const product =
+                String(row[2] || '').trim();
+
+            const totalValue =
+                row[5] ??
+                row[4] ??
+                row[6] ??
+                0;
+
+            const quantite =
+                normalizeNumeric(totalValue);
+
+            const jigsTotales =
+                normalizeNumeric(
+                    row[4] || 0
+                );
+
+            if (
+                !product &&
+                !family
+            ) {
                 return;
             }
 
-            seen.add(key);
+            if (!(quantite > 0)) {
+                return;
+            }
 
-            const numericQuantity = Number(quantite) || 0;
+            const aliases =
+                new Set();
 
-            rows.push({
-                id: `EXCEL-${rows.length + 1}`,
-                date: new Date().toLocaleDateString('fr-FR'),
-                heure: new Date().toLocaleTimeString('fr-FR'),
-                produit: cleanAlias,
-                quantite: numericQuantity,
-                quantite_totale: numericQuantity,
-                jigs_totales: Number(jigsTotales) || 0,
-                taux: `${Math.min(100, Math.max(0, numericQuantity))}%`,
-                jigs: normalizeNumeric(row[3] || 0),
-                kits: normalizeNumeric(row[4] || 0),
-                consommation: normalizeNumeric(row[6] || 0),
-                sheet: 'Table'
+            if (product) {
+                aliases.add(product);
+            }
+
+            if (
+                family &&
+                product
+            ) {
+                aliases.add(
+                    `${family} ${product}`
+                );
+
+                aliases.add(
+                    `${family}_${product}`
+                );
+            }
+
+            if (
+                family &&
+                !product
+            ) {
+                aliases.add(family);
+            }
+
+            aliases.forEach(alias => {
+                const cleanAlias =
+                    String(alias).trim();
+
+                if (!cleanAlias) {
+                    return;
+                }
+
+                const key =
+                    `Table|${cleanAlias}`;
+
+                if (seen.has(key)) {
+                    return;
+                }
+
+                seen.add(key);
+
+                const numericQuantity =
+                    Number(quantite) || 0;
+
+                rows.push({
+                    id:
+                        `EXCEL-${rows.length + 1}`,
+
+                    date:
+                        new Date()
+                            .toLocaleDateString(
+                                'fr-FR'
+                            ),
+
+                    heure:
+                        new Date()
+                            .toLocaleTimeString(
+                                'fr-FR'
+                            ),
+
+                    produit:
+                        cleanAlias,
+
+                    quantite:
+                        numericQuantity,
+
+                    quantite_totale:
+                        numericQuantity,
+
+                    jigs_totales:
+                        Number(jigsTotales) || 0,
+
+                    taux:
+                        `${Math.min(
+                            100,
+                            Math.max(
+                                0,
+                                numericQuantity
+                            )
+                        )}%`,
+
+                    jigs:
+                        normalizeNumeric(
+                            row[3] || 0
+                        ),
+
+                    kits:
+                        normalizeNumeric(
+                            row[4] || 0
+                        ),
+
+                    consommation:
+                        normalizeNumeric(
+                            row[6] || 0
+                        ),
+
+                    sheet:
+                        'Table'
+                });
             });
         });
-    });
 
     return rows;
 }
 
 async function readHistoryFile() {
     try {
-        const raw = await fs.readFile(HISTORY_FILE, 'utf8');
-        const parsed = JSON.parse(raw);
+        const raw =
+            await fs.readFile(
+                HISTORY_FILE,
+                'utf8'
+            );
 
-        return Array.isArray(parsed) ? parsed : [];
+        const parsed =
+            JSON.parse(raw);
+
+        return Array.isArray(parsed)
+            ? parsed
+            : [];
+
     } catch (error) {
         if (error.code === 'ENOENT') {
             return [];
@@ -285,15 +407,20 @@ async function readHistoryFile() {
 async function writeHistoryFile(history) {
     await fs.writeFile(
         HISTORY_FILE,
-        JSON.stringify(history, null, 2),
+        JSON.stringify(
+            history,
+            null,
+            2
+        ),
         'utf8'
     );
 }
 
 function findProductReference(product) {
-    const target = String(product || '')
-        .trim()
-        .toLowerCase();
+    const target =
+        String(product || '')
+            .trim()
+            .toLowerCase();
 
     if (!target) {
         return null;
@@ -301,17 +428,25 @@ function findProductReference(product) {
 
     try {
         const rows =
-            readBaseDonneesFromExcel(BASE_DATA_PATH);
+            readBaseDonneesFromExcel(
+                BASE_DATA_PATH
+            );
 
         return (
             rows.find(row =>
-                String(row.produit || '')
+                String(
+                    row.produit || ''
+                )
                     .trim()
-                    .toLowerCase() === target
+                    .toLowerCase() ===
+                target
             ) ||
+
             rows.find(row => {
                 const current =
-                    String(row.produit || '')
+                    String(
+                        row.produit || ''
+                    )
                         .trim()
                         .toLowerCase();
 
@@ -320,8 +455,10 @@ function findProductReference(product) {
                     target.includes(current)
                 );
             }) ||
+
             null
         );
+
     } catch (error) {
         console.error(
             'Erreur recherche référence produit:',
@@ -333,31 +470,52 @@ function findProductReference(product) {
 }
 
 async function saveDetectionEvents(counts) {
-    if (!counts || typeof counts !== 'object') {
+    if (
+        !counts ||
+        typeof counts !== 'object'
+    ) {
         return [];
     }
 
-    const validProducts = Object.entries(counts)
-        .map(([product, quantity]) => ({
-            product: String(product || '').trim(),
-            quantity: normalizeNumeric(quantity)
-        }))
-        .filter(item =>
-            item.product &&
-            item.quantity > 0
-        );
+    const validProducts =
+        Object.entries(counts)
+            .map(
+                ([product, quantity]) => ({
+                    product:
+                        String(
+                            product || ''
+                        ).trim(),
+
+                    quantity:
+                        normalizeNumeric(
+                            quantity
+                        )
+                })
+            )
+            .filter(item =>
+                item.product &&
+                item.quantity > 0
+            );
 
     if (!validProducts.length) {
         return [];
     }
 
-    const history = await readHistoryFile();
-    const saved = [];
-    const now = new Date();
+    const history =
+        await readHistoryFile();
 
-    for (const item of validProducts) {
+    const saved = [];
+
+    const now =
+        new Date();
+
+    for (
+        const item of validProducts
+    ) {
         const reference =
-            findProductReference(item.product) || {};
+            findProductReference(
+                item.product
+            ) || {};
 
         const jigsTotal =
             Number(
@@ -367,31 +525,44 @@ async function saveDetectionEvents(counts) {
             ) || 0;
 
         const family =
-            reference.famille || '—';
+            reference.famille ||
+            '—';
 
-        const previousTotal = history
-            .filter(record =>
-                String(record.produit || '')
-                    .trim()
-                    .toLowerCase() ===
-                item.product.toLowerCase()
-            )
-            .reduce(
-                (sum, record) =>
-                    sum +
-                    normalizeNumeric(record.quantite),
-                0
-            );
+        const previousTotal =
+            history
+                .filter(record =>
+                    String(
+                        record.produit || ''
+                    )
+                        .trim()
+                        .toLowerCase() ===
+                    item.product.toLowerCase()
+                )
+                .reduce(
+                    (
+                        sum,
+                        record
+                    ) =>
+                        sum +
+                        normalizeNumeric(
+                            record.quantite
+                        ),
+                    0
+                );
 
         const totalLoading =
-            previousTotal + item.quantity;
+            previousTotal +
+            item.quantity;
 
         const rendement =
             jigsTotal > 0
                 ? Math.min(
                     100,
                     Math.round(
-                        (item.quantity / jigsTotal) * 100
+                        (
+                            item.quantity /
+                            jigsTotal
+                        ) * 100
                     )
                 )
                 : 0;
@@ -404,10 +575,14 @@ async function saveDetectionEvents(counts) {
                     .toUpperCase()}`,
 
             date:
-                now.toLocaleDateString('fr-FR'),
+                now.toLocaleDateString(
+                    'fr-FR'
+                ),
 
             heure:
-                now.toLocaleTimeString('fr-FR'),
+                now.toLocaleTimeString(
+                    'fr-FR'
+                ),
 
             timestamp:
                 now.toISOString(),
@@ -448,1034 +623,1528 @@ async function saveDetectionEvents(counts) {
     return saved;
 }
 
-app.get('/api/history', async (req, res) => {
-    try {
-        const history =
-            await readHistoryFile();
+app.get(
+    '/api/history',
+    async (req, res) => {
+        try {
+            const history =
+                await readHistoryFile();
 
-        res.json({
-            success: true,
-            history
-        });
-    } catch (error) {
-        console.error(
-            'Erreur API historique:',
-            error.message
-        );
+            res.json({
+                success: true,
+                history
+            });
 
-        res.status(500).json({
-            success: false,
-            message:
-                'Impossible de charger l\'historique.',
-            history: []
-        });
-    }
-});
+        } catch (error) {
+            console.error(
+                'Erreur API historique:',
+                error.message
+            );
 
-app.post('/api/history', async (req, res) => {
-    try {
-        const record = req.body;
-
-        if (!record || !record.produit) {
-            return res.status(400).json({
+            res.status(500).json({
                 success: false,
-                message: 'Produit requis.'
+                message:
+                    'Impossible de charger l\'historique.',
+                history: []
             });
         }
-
-        const history = await readHistoryFile();
-
-        const newRecord = {
-            id: `VAL-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-            date: new Date().toLocaleDateString('fr-FR'),
-            heure: new Date().toLocaleTimeString('fr-FR'),
-            timestamp: new Date().toISOString(),
-            produit: String(record.produit || '').trim(),
-            famille: record.famille || '—',
-            quantite: normalizeNumeric(record.quantite),
-            quantite_totale: normalizeNumeric(record.quantite),
-            chargement_total: normalizeNumeric(record.quantite),
-            jigs_totales: normalizeNumeric(record.jigs_totales),
-            rendement: normalizeNumeric(
-                String(record.taux || '0')
-                    .replace('%', '')
-                    .replace(',', '.')
-            ),
-            taux: record.taux || '0%'
-        };
-
-        history.unshift(newRecord);
-
-        await writeHistoryFile(
-            history.slice(0, 10000)
-        );
-
-        res.json({
-            success: true,
-            record: newRecord
-        });
-    } catch (error) {
-        console.error(
-            'Erreur API historique POST:',
-            error.message
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Impossible de sauvegarder dans l\'historique.'
-        });
     }
-});
+);
 
-app.get('/api/base-donnees', (req, res) => {
-    try {
-        const rows =
-            readBaseDonneesFromExcel(
-                BASE_DATA_PATH
+app.post(
+    '/api/history',
+    async (req, res) => {
+        try {
+            const record =
+                req.body;
+
+            if (
+                !record ||
+                !record.produit
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Produit requis.'
+                });
+            }
+
+            const history =
+                await readHistoryFile();
+
+            const newRecord = {
+                id:
+                    `VAL-${Date.now()}-${Math.random()
+                        .toString(36)
+                        .slice(2, 8)
+                        .toUpperCase()}`,
+
+                date:
+                    new Date()
+                        .toLocaleDateString(
+                            'fr-FR'
+                        ),
+
+                heure:
+                    new Date()
+                        .toLocaleTimeString(
+                            'fr-FR'
+                        ),
+
+                timestamp:
+                    new Date().toISOString(),
+
+                produit:
+                    String(
+                        record.produit || ''
+                    ).trim(),
+
+                famille:
+                    record.famille ||
+                    '—',
+
+                quantite:
+                    normalizeNumeric(
+                        record.quantite
+                    ),
+
+                quantite_totale:
+                    normalizeNumeric(
+                        record.quantite
+                    ),
+
+                chargement_total:
+                    normalizeNumeric(
+                        record.quantite
+                    ),
+
+                jigs_totales:
+                    normalizeNumeric(
+                        record.jigs_totales
+                    ),
+
+                rendement:
+                    normalizeNumeric(
+                        String(
+                            record.taux ||
+                            '0'
+                        )
+                            .replace('%', '')
+                            .replace(',', '.')
+                    ),
+
+                taux:
+                    record.taux ||
+                    '0%'
+            };
+
+            history.unshift(
+                newRecord
             );
 
-        res.json({
-            success: true,
-            source: BASE_DATA_PATH,
-            count: rows.length,
-            data: rows
-        });
-    } catch (error) {
-        console.error(
-            'Erreur lecture Excel serveur:',
-            error.message
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Impossible de lire la base Excel côté serveur.',
-            data: []
-        });
-    }
-});
-
-app.get('/api/detect-test', (req, res) => {
-    try {
-        const rows =
-            readBaseDonneesFromExcel(
-                BASE_DATA_PATH
+            await writeHistoryFile(
+                history.slice(0, 10000)
             );
 
-        const testProduct =
-            rows.length > 0
-                ? rows[0].produit
-                : 'PRODUIT_TEST';
+            res.json({
+                success: true,
+                record: newRecord
+            });
 
-        res.json({
-            success: true,
-            capture: 'test-capture.jpg',
+        } catch (error) {
+            console.error(
+                'Erreur API historique POST:',
+                error.message
+            );
 
-            detections: [
-                {
-                    product: testProduct,
-                    confidence: 0.95,
-                    x: 100,
-                    y: 100,
-                    width: 200,
-                    height: 200,
-                    model: 'primary'
-                }
-            ],
-
-            counts: {
-                [testProduct]: 3
-            },
-
-            jig_detections: [],
-            jig_count: 0,
-            jig_counts: {},
-            test: true
-        });
-    } catch (error) {
-        console.error(
-            'Test detection error:',
-            error.message
-        );
-
-        res.json({
-            success: true,
-            capture: 'test-capture.jpg',
-
-            detections: [
-                {
-                    product: 'PRODUIT_TEST',
-                    confidence: 0.95,
-                    x: 100,
-                    y: 100,
-                    width: 200,
-                    height: 200,
-                    model: 'primary'
-                }
-            ],
-
-            counts: {
-                PRODUIT_TEST: 3
-            },
-
-            jig_detections: [],
-            jig_count: 0,
-            jig_counts: {},
-            test: true
-        });
+            res.status(500).json({
+                success: false,
+                message:
+                    'Impossible de sauvegarder dans l\'historique.'
+            });
+        }
     }
-});
+);
 
-app.post('/api/detect', async (req, res) => {
-    const image = req.body?.image;
+app.get(
+    '/api/base-donnees',
+    (req, res) => {
+        try {
+            const rows =
+                readBaseDonneesFromExcel(
+                    BASE_DATA_PATH
+                );
 
-    if (!image || typeof image !== 'string') {
-        return res.status(400).json({
-            success: false,
-            message: 'Image manquante.'
-        });
+            res.json({
+                success: true,
+                source:
+                    BASE_DATA_PATH,
+                count:
+                    rows.length,
+                data:
+                    rows
+            });
+
+        } catch (error) {
+            console.error(
+                'Erreur lecture Excel serveur:',
+                error.message
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Impossible de lire la base Excel côté serveur.',
+                data: []
+            });
+        }
     }
+);
 
-    const base64 = image.replace(
-        /^data:image\/[a-zA-Z+]+;base64,/,
-        ''
-    );
+app.get(
+    '/api/detect-test',
+    (req, res) => {
+        try {
+            const rows =
+                readBaseDonneesFromExcel(
+                    BASE_DATA_PATH
+                );
 
-    let imagePath;
+            const testProduct =
+                rows.length > 0
+                    ? rows[0].produit
+                    : 'PRODUIT_TEST';
 
-    try {
-        const imageBuffer =
-            Buffer.from(base64, 'base64');
+            res.json({
+                success: true,
+                capture:
+                    'test-capture.jpg',
+
+                detections: [
+                    {
+                        product:
+                            testProduct,
+
+                        confidence:
+                            0.95,
+
+                        x:
+                            null,
+
+                        y:
+                            null,
+
+                        width:
+                            null,
+
+                        height:
+                            null,
+
+                        model:
+                            'primary'
+                    }
+                ],
+
+                counts: {
+                    [testProduct]: 1
+                },
+
+                jig_detections: [],
+
+                jig_count:
+                    0,
+
+                jig_counts: {},
+
+                test:
+                    true
+            });
+
+        } catch (error) {
+            console.error(
+                'Test detection error:',
+                error.message
+            );
+
+            res.json({
+                success: true,
+
+                capture:
+                    'test-capture.jpg',
+
+                detections: [
+                    {
+                        product:
+                            'PRODUIT_TEST',
+
+                        confidence:
+                            0.95,
+
+                        x:
+                            null,
+
+                        y:
+                            null,
+
+                        width:
+                            null,
+
+                        height:
+                            null,
+
+                        model:
+                            'primary'
+                    }
+                ],
+
+                counts: {
+                    PRODUIT_TEST: 1
+                },
+
+                jig_detections: [],
+
+                jig_count:
+                    0,
+
+                jig_counts: {},
+
+                test:
+                    true
+            });
+        }
+    }
+);
+
+app.post(
+    '/api/detect',
+    async (req, res) => {
+
+        const image =
+            req.body?.image;
 
         if (
-            !imageBuffer.length ||
-            imageBuffer.length > 8 * 1024 * 1024
+            !image ||
+            typeof image !== 'string'
         ) {
             return res.status(400).json({
                 success: false,
                 message:
-                    'Image invalide ou trop volumineuse.'
+                    'Image manquante.'
             });
         }
 
-        await fs.mkdir(
-            capturesDirectory,
-            { recursive: true }
-        );
-
-        const captureName =
-            `capture-${new Date()
-                .toISOString()
-                .replace(/[:.]/g, '-')}-${Math.random()
-                .toString(36)
-                .slice(2, 8)}.jpg`;
-
-        imagePath =
-            path.join(
-                capturesDirectory,
-                captureName
+        const base64 =
+            image.replace(
+                /^data:image\/[a-zA-Z0-9+.-]+;base64,/,
+                ''
             );
 
-        await fs.writeFile(
-            imagePath,
-            imageBuffer,
-            { mode: 0o600 }
-        );
-
-        if (!process.env.VALEO_ROBOFLOW_API_KEY) {
-            return res.status(503).json({
-                success: false,
-                message:
-                    'Clé Roboflow absente. La capture a bien été sauvegardée, mais son analyse ne peut pas démarrer.'
-            });
-        }
-
-        const scriptPath =
-            path.join(
-                __dirname,
-                'inference.py'
-            );
+        let imagePath;
 
         try {
-            const { stdout } =
-                await execFileAsync(
+
+            const imageBuffer =
+                Buffer.from(
+                    base64,
+                    'base64'
+                );
+
+            if (
+                !imageBuffer.length ||
+                imageBuffer.length >
+                8 * 1024 * 1024
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Image invalide ou trop volumineuse.'
+                });
+            }
+
+            await fs.mkdir(
+                capturesDirectory,
+                {
+                    recursive: true
+                }
+            );
+
+            const captureName =
+                `capture-${new Date()
+                    .toISOString()
+                    .replace(/[:.]/g, '-')}-${Math.random()
+                    .toString(36)
+                    .slice(2, 8)}.jpg`;
+
+            imagePath =
+                path.join(
+                    capturesDirectory,
+                    captureName
+                );
+
+            await fs.writeFile(
+                imagePath,
+                imageBuffer,
+                {
+                    mode: 0o600
+                }
+            );
+
+            const scriptPath =
+                path.join(
+                    __dirname,
+                    'inference.py'
+                );
+
+            if (
+                !fsSync.existsSync(
+                    scriptPath
+                )
+            ) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        `inference.py introuvable : ${scriptPath}`
+                });
+            }
+
+            try {
+
+                const {
+                    stdout,
+                    stderr
+                } = await execFileAsync(
                     pythonCommand,
                     [
                         scriptPath,
                         imagePath
                     ],
                     {
-                        timeout: 60000,
+                        timeout:
+                            120000,
+
                         maxBuffer:
-                            2 * 1024 * 1024,
+                            4 * 1024 * 1024,
+
                         env:
                             process.env
                     }
                 );
 
-            const inference =
-                JSON.parse(stdout);
+                if (stderr) {
+                    console.log(
+                        '[PYTHON]',
+                        stderr
+                    );
+                }
 
-            const savedHistory =
-                await saveDetectionEvents(
-                    inference.counts
+                const output =
+                    String(stdout || '')
+                        .trim();
+
+                if (!output) {
+                    throw new Error(
+                        'inference.py n\'a retourné aucun résultat JSON.'
+                    );
+                }
+
+                const lines =
+                    output
+                        .split(/\r?\n/)
+                        .map(line => line.trim())
+                        .filter(Boolean);
+
+                let inference = null;
+
+                for (
+                    let i = lines.length - 1;
+                    i >= 0;
+                    i--
+                ) {
+                    try {
+                        const parsed =
+                            JSON.parse(
+                                lines[i]
+                            );
+
+                        if (
+                            parsed &&
+                            typeof parsed === 'object'
+                        ) {
+                            inference =
+                                parsed;
+
+                            break;
+                        }
+
+                    } catch (_) {
+                    }
+                }
+
+                if (!inference) {
+                    throw new Error(
+                        'Impossible de lire le JSON retourné par inference.py.'
+                    );
+                }
+
+                const savedHistory =
+                    await saveDetectionEvents(
+                        inference.counts
+                    );
+
+                return res.json({
+                    success: true,
+
+                    capture:
+                        captureName,
+
+                    ...inference,
+
+                    historySaved:
+                        savedHistory.length > 0,
+
+                    historyRecords:
+                        savedHistory
+                });
+
+            } catch (inferenceError) {
+
+                console.error(
+                    'Erreur inference.py:',
+                    inferenceError.message
                 );
 
-            res.json({
-                success: true,
-                capture: captureName,
-                ...inference,
-                historySaved:
-                    savedHistory.length > 0,
-                historyRecords:
-                    savedHistory
-            });
-        } catch (inferenceError) {
-            console.warn(
-                'Inference timeout or error:',
-                inferenceError.message
+                if (
+                    inferenceError.stdout
+                ) {
+                    console.error(
+                        'stdout:',
+                        inferenceError.stdout
+                    );
+                }
+
+                if (
+                    inferenceError.stderr
+                ) {
+                    console.error(
+                        'stderr:',
+                        inferenceError.stderr
+                    );
+                }
+
+                return res.status(500).json({
+                    success: false,
+
+                    capture:
+                        captureName,
+
+                    detections: [],
+
+                    counts: {},
+
+                    jig_detections: [],
+
+                    jig_count: 0,
+
+                    jig_counts: {},
+
+                    message:
+                        `Erreur lors de l'exécution des modèles IA : ${inferenceError.message}`
+                });
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Inference error:',
+                error.message
             );
 
-            res.json({
-                success: true,
-                capture: captureName,
+            return res.status(500).json({
+                success: false,
+
+                capture:
+                    'unknown',
+
                 detections: [],
+
                 counts: {},
+
                 jig_detections: [],
+
                 jig_count: 0,
+
                 jig_counts: {},
-                timeout: true
+
+                message:
+                    'Erreur serveur lors du traitement de l\'image.'
             });
         }
-    } catch (error) {
-        console.error(
-            'Inference error:',
-            error.message
-        );
-
-        res.json({
-            success: true,
-            capture: 'unknown',
-            detections: [],
-            counts: {},
-            jig_detections: [],
-            jig_count: 0,
-            jig_counts: {}
-        });
     }
-});
+);
 
-app.post('/api/signup', (req, res) => {
-    try {
-        const {
-            firstName,
-            lastName,
-            email,
-            role,
-            password
-        } = req.body;
-
-        if (
-            !firstName ||
-            !lastName ||
-            !email ||
-            !role ||
-            !password
-        ) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Tous les champs sont requis.'
-            });
-        }
-
-        const emailPattern =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailPattern.test(email)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Format d\'email invalide.'
-            });
-        }
-
-        const validRoles = [
-            'Ingénieur',
-            'Technicien',
-            'Ouvrier'
-        ];
-
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Rôle invalide. Choisissez Ingénieur, Technicien ou Ouvrier.'
-            });
-        }
-
-        if (password.length < 8) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Le mot de passe doit contenir au moins 8 caractères.'
-            });
-        }
-
-        const {
-            userId,
-            loginCode
-        } = createUser(
-            firstName,
-            lastName,
-            email,
-            role,
-            password
-        );
-
+app.post(
+    '/api/signup',
+    (req, res) => {
         try {
-            appendToExcel(
+
+            const {
                 firstName,
                 lastName,
                 email,
                 role,
+                password
+            } = req.body;
+
+            if (
+                !firstName ||
+                !lastName ||
+                !email ||
+                !role ||
+                !password
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Tous les champs sont requis.'
+                });
+            }
+
+            const emailPattern =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (
+                !emailPattern.test(email)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Format d\'email invalide.'
+                });
+            }
+
+            const validRoles = [
+                'Ingénieur',
+                'Technicien',
+                'Ouvrier'
+            ];
+
+            if (
+                !validRoles.includes(role)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Rôle invalide. Choisissez Ingénieur, Technicien ou Ouvrier.'
+                });
+            }
+
+            if (
+                password.length < 8
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Le mot de passe doit contenir au moins 8 caractères.'
+                });
+            }
+
+            const {
+                userId,
+                loginCode
+            } = createUser(
+                firstName,
+                lastName,
+                email,
+                role,
+                password
+            );
+
+            try {
+
+                appendToExcel(
+                    firstName,
+                    lastName,
+                    email,
+                    role,
+                    loginCode,
+                    password,
+                    userId
+                );
+
+            } catch (excelErr) {
+
+                console.error(
+                    'Erreur écriture Excel:',
+                    excelErr.message
+                );
+            }
+
+            res.status(201).json({
+                success: true,
+
+                message:
+                    'Compte créé avec succès.',
+
                 loginCode,
-                password,
+
                 userId
-            );
-        } catch (excelErr) {
+            });
+
+        } catch (error) {
+
             console.error(
-                'Erreur écriture Excel:',
-                excelErr.message
+                'Signup error:',
+                error
             );
+
+            res.status(500).json({
+                success: false,
+
+                message:
+                    'Erreur serveur. Veuillez réessayer.'
+            });
         }
-
-        res.status(201).json({
-            success: true,
-            message:
-                'Compte créé avec succès.',
-            loginCode,
-            userId
-        });
-    } catch (error) {
-        console.error(
-            'Signup error:',
-            error
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur. Veuillez réessayer.'
-        });
     }
-});
+);
 
-app.post('/api/login', (req, res) => {
-    try {
-        const {
-            loginCode,
-            password
-        } = req.body;
+app.post(
+    '/api/login',
+    (req, res) => {
 
-        if (!loginCode || !password) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Code et mot de passe requis.'
-            });
-        }
+        try {
 
-        const user =
-            findUserByLoginCode(
-                loginCode.toUpperCase()
-            );
+            const {
+                loginCode,
+                password
+            } = req.body;
 
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message:
-                    'Code ou mot de passe incorrect.'
-            });
-        }
-
-        if (
-            !validatePassword(
-                password,
-                user.password_hash
-            )
-        ) {
-            return res.status(401).json({
-                success: false,
-                message:
-                    'Code ou mot de passe incorrect.'
-            });
-        }
-
-        res.json({
-            success: true,
-            message:
-                'Connexion réussie.',
-            user: {
-                id: user.id,
-                firstName:
-                    user.first_name,
-                lastName:
-                    user.last_name,
-                email:
-                    user.email || '',
-                role:
-                    user.role,
-                loginCode:
-                    user.login_code,
-                isAdmin:
-                    user.is_admin === 1
+            if (
+                !loginCode ||
+                !password
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Code et mot de passe requis.'
+                });
             }
-        });
-    } catch (error) {
-        console.error(
-            'Login error:',
-            error
-        );
 
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur. Veuillez réessayer.'
-        });
-    }
-});
+            const user =
+                findUserByLoginCode(
+                    loginCode.toUpperCase()
+                );
 
-app.get('/api/users', (req, res) => {
-    try {
-        const users =
-            getAllUsers();
-
-        res.json({
-            success: true,
-            users
-        });
-    } catch (error) {
-        console.error(
-            'Get users error:',
-            error
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur.'
-        });
-    }
-});
-
-app.delete('/api/users/:id', (req, res) => {
-    try {
-        const userId =
-            parseInt(
-                req.params.id,
-                10
-            );
-
-        if (isNaN(userId)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'ID invalide.'
-            });
-        }
-
-        deleteUser(userId);
-
-        res.json({
-            success: true,
-            message:
-                'Utilisateur supprimé.'
-        });
-    } catch (error) {
-        console.error(
-            'Delete user error:',
-            error
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur.'
-        });
-    }
-});
-
-app.put('/api/users/:id/role', (req, res) => {
-    try {
-        const userId =
-            parseInt(
-                req.params.id,
-                10
-            );
-
-        const { role } = req.body;
-
-        const validRoles = [
-            'Ingénieur',
-            'Technicien',
-            'Ouvrier'
-        ];
-
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Rôle invalide.'
-            });
-        }
-
-        updateUserRole(
-            userId,
-            role
-        );
-
-        res.json({
-            success: true,
-            message:
-                'Rôle mis à jour.'
-        });
-    } catch (error) {
-        console.error(
-            'Update role error:',
-            error
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur.'
-        });
-    }
-});
-
-app.get('/api/users/:id', (req, res) => {
-    try {
-        const userId =
-            parseInt(
-                req.params.id,
-                10
-            );
-
-        if (isNaN(userId)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'ID invalide.'
-            });
-        }
-
-        const user =
-            findUserById(userId);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message:
-                    'Utilisateur introuvable.'
-            });
-        }
-
-        res.json({
-            success: true,
-            user: {
-                id: user.id,
-                firstName:
-                    user.first_name,
-                lastName:
-                    user.last_name,
-                email:
-                    user.email,
-                role:
-                    user.role,
-                loginCode:
-                    user.login_code,
-                isAdmin:
-                    user.is_admin === 1
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message:
+                        'Code ou mot de passe incorrect.'
+                });
             }
-        });
-    } catch (error) {
-        console.error(
-            'Get user error:',
-            error
-        );
 
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur.'
-        });
-    }
-});
+            if (
+                !validatePassword(
+                    password,
+                    user.password_hash
+                )
+            ) {
+                return res.status(401).json({
+                    success: false,
+                    message:
+                        'Code ou mot de passe incorrect.'
+                });
+            }
 
-app.put('/api/users/change-password', (req, res) => {
-    try {
-        const {
-            userId,
-            currentPassword,
-            newPassword
-        } = req.body;
+            res.json({
+                success: true,
 
-        if (
-            !userId ||
-            !currentPassword ||
-            !newPassword
-        ) {
-            return res.status(400).json({
-                success: false,
                 message:
-                    'Tous les champs sont requis.'
-            });
-        }
+                    'Connexion réussie.',
 
-        if (newPassword.length < 8) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Le nouveau mot de passe doit contenir au moins 8 caractères.'
-            });
-        }
+                user: {
 
-        const user =
-            findUserById(
-                parseInt(userId, 10)
+                    id:
+                        user.id,
+
+                    firstName:
+                        user.first_name,
+
+                    lastName:
+                        user.last_name,
+
+                    email:
+                        user.email || '',
+
+                    role:
+                        user.role,
+
+                    loginCode:
+                        user.login_code,
+
+                    isAdmin:
+                        user.is_admin === 1
+                }
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Login error:',
+                error
             );
 
-        if (!user) {
-            return res.status(404).json({
+            res.status(500).json({
                 success: false,
+
                 message:
-                    'Utilisateur introuvable.'
+                    'Erreur serveur. Veuillez réessayer.'
             });
         }
+    }
+);
 
-        if (
-            !validatePassword(
+app.get(
+    '/api/users',
+    (req, res) => {
+
+        try {
+
+            const users =
+                getAllUsers();
+
+            res.json({
+                success: true,
+                users
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Get users error:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Erreur serveur.'
+            });
+        }
+    }
+);
+
+app.delete(
+    '/api/users/:id',
+    (req, res) => {
+
+        try {
+
+            const userId =
+                parseInt(
+                    req.params.id,
+                    10
+                );
+
+            if (isNaN(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'ID invalide.'
+                });
+            }
+
+            deleteUser(userId);
+
+            res.json({
+                success: true,
+                message:
+                    'Utilisateur supprimé.'
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Delete user error:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Erreur serveur.'
+            });
+        }
+    }
+);
+
+app.put(
+    '/api/users/:id/role',
+    (req, res) => {
+
+        try {
+
+            const userId =
+                parseInt(
+                    req.params.id,
+                    10
+                );
+
+            const {
+                role
+            } = req.body;
+
+            const validRoles = [
+                'Ingénieur',
+                'Technicien',
+                'Ouvrier'
+            ];
+
+            if (
+                !validRoles.includes(role)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Rôle invalide.'
+                });
+            }
+
+            updateUserRole(
+                userId,
+                role
+            );
+
+            res.json({
+                success: true,
+                message:
+                    'Rôle mis à jour.'
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Update role error:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Erreur serveur.'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/users/:id',
+    (req, res) => {
+
+        try {
+
+            const userId =
+                parseInt(
+                    req.params.id,
+                    10
+                );
+
+            if (isNaN(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'ID invalide.'
+                });
+            }
+
+            const user =
+                findUserById(userId);
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        'Utilisateur introuvable.'
+                });
+            }
+
+            res.json({
+                success: true,
+
+                user: {
+
+                    id:
+                        user.id,
+
+                    firstName:
+                        user.first_name,
+
+                    lastName:
+                        user.last_name,
+
+                    email:
+                        user.email,
+
+                    role:
+                        user.role,
+
+                    loginCode:
+                        user.login_code,
+
+                    isAdmin:
+                        user.is_admin === 1
+                }
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Get user error:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Erreur serveur.'
+            });
+        }
+    }
+);
+
+app.put(
+    '/api/users/change-password',
+    (req, res) => {
+
+        try {
+
+            const {
+                userId,
                 currentPassword,
-                user.password_hash
-            )
-        ) {
-            return res.status(401).json({
-                success: false,
-                message:
-                    'Mot de passe actuel incorrect.'
-            });
-        }
+                newPassword
+            } = req.body;
 
-        const bcrypt =
-            require('bcryptjs');
+            if (
+                !userId ||
+                !currentPassword ||
+                !newPassword
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Tous les champs sont requis.'
+                });
+            }
 
-        const newHash =
-            bcrypt.hashSync(
-                newPassword,
-                10
+            if (
+                newPassword.length < 8
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Le nouveau mot de passe doit contenir au moins 8 caractères.'
+                });
+            }
+
+            const user =
+                findUserById(
+                    parseInt(
+                        userId,
+                        10
+                    )
+                );
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        'Utilisateur introuvable.'
+                });
+            }
+
+            if (
+                !validatePassword(
+                    currentPassword,
+                    user.password_hash
+                )
+            ) {
+                return res.status(401).json({
+                    success: false,
+                    message:
+                        'Mot de passe actuel incorrect.'
+                });
+            }
+
+            const bcrypt =
+                require('bcryptjs');
+
+            const newHash =
+                bcrypt.hashSync(
+                    newPassword,
+                    10
+                );
+
+            updateUserPassword(
+                parseInt(
+                    userId,
+                    10
+                ),
+                newHash
             );
 
-        updateUserPassword(
-            parseInt(userId, 10),
-            newHash
-        );
+            res.json({
+                success: true,
+                message:
+                    'Mot de passe modifié avec succès.'
+            });
 
-        res.json({
-            success: true,
-            message:
-                'Mot de passe modifié avec succès.'
-        });
-    } catch (error) {
-        console.error(
-            'Change password error:',
-            error
-        );
+        } catch (error) {
 
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur.'
-        });
+            console.error(
+                'Change password error:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Erreur serveur.'
+            });
+        }
     }
-});
+);
 
-app.put('/api/users/profile', (req, res) => {
-    try {
-        const {
-            id,
-            firstName,
-            lastName,
-            email,
-            role
-        } = req.body;
+app.put(
+    '/api/users/profile',
+    (req, res) => {
 
-        if (
-            !id ||
-            !firstName ||
-            !lastName ||
-            !email ||
-            !role
-        ) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Tous les champs sont requis.'
-            });
-        }
+        try {
 
-        const validRoles = [
-            'Ingénieur',
-            'Technicien',
-            'Ouvrier'
-        ];
+            const {
+                id,
+                firstName,
+                lastName,
+                email,
+                role
+            } = req.body;
 
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Rôle invalide.'
-            });
-        }
-
-        const emailPattern =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailPattern.test(email)) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    'Format d\'email invalide.'
-            });
-        }
-
-        updateUserProfile(
-            id,
-            firstName,
-            lastName,
-            email,
-            role
-        );
-
-        res.json({
-            success: true,
-            message:
-                'Profil mis à jour avec succès.'
-        });
-    } catch (error) {
-        console.error(
-            'Update profile error:',
-            error
-        );
-
-        res.status(500).json({
-            success: false,
-            message:
-                'Erreur serveur.'
-        });
-    }
-});
-
-app.post('/api/alert-empty-balancelles', async (req, res) => {
-    try {
-        const { produit, quantite, timestamp } = req.body || {};
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.VALEO_ALERT_EMAIL,
-                pass: process.env.VALEO_ALERT_PASSWORD
+            if (
+                !id ||
+                !firstName ||
+                !lastName ||
+                !email ||
+                !role
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Tous les champs sont requis.'
+                });
             }
-        });
 
-        const mailOptions = {
-            from: process.env.VALEO_ALERT_EMAIL || 'alerte@valeo.local',
-            to: 'sameher.ajimi@enis.tn',
-            subject: `Alerte Valeo : Rendement ${rendement || '?'}% < 90% - ${produit || 'Produit inconnu'}`,
-            text: `Alerte automatique Valeo.\n\nProduit : ${produit || 'N/A'}\nDernière quantité : ${quantite || 0}\nRendement : ${rendement || '?'}%\nHeure : ${timestamp || new Date().toLocaleString('fr-FR')}\n\nLe rendement est inférieur à 90%.`,
-            html: `<p>Alerte automatique <strong>Valeo</strong>.</p>
+            const validRoles = [
+                'Ingénieur',
+                'Technicien',
+                'Ouvrier'
+            ];
+
+            if (
+                !validRoles.includes(role)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Rôle invalide.'
+                });
+            }
+
+            const emailPattern =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (
+                !emailPattern.test(email)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        'Format d\'email invalide.'
+                });
+            }
+
+            updateUserProfile(
+                id,
+                firstName,
+                lastName,
+                email,
+                role
+            );
+
+            res.json({
+                success: true,
+                message:
+                    'Profil mis à jour avec succès.'
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Update profile error:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Erreur serveur.'
+            });
+        }
+    }
+);
+
+app.post(
+    '/api/alert-empty-balancelles',
+    async (req, res) => {
+
+        try {
+
+            const {
+                produit,
+                quantite,
+                rendement,
+                timestamp
+            } = req.body || {};
+
+            const transporter =
+                nodemailer.createTransport({
+                    service: 'gmail',
+
+                    auth: {
+                        user:
+                            process.env.VALEO_ALERT_EMAIL,
+
+                        pass:
+                            process.env.VALEO_ALERT_PASSWORD
+                    }
+                });
+
+            const mailOptions = {
+
+                from:
+                    process.env.VALEO_ALERT_EMAIL ||
+                    'alerte@valeo.local',
+
+                to:
+                    'sameher.ajimi@enis.tn',
+
+                subject:
+                    `Alerte Valeo : Rendement ${rendement ?? '?'}% < 90% - ${produit || 'Produit inconnu'}`,
+
+                text:
+                    `Alerte automatique Valeo.
+
+Produit : ${produit || 'N/A'}
+Dernière quantité : ${quantite ?? 0}
+Rendement : ${rendement ?? '?'}%
+Heure : ${timestamp || new Date().toLocaleString('fr-FR')}
+
+Le rendement est inférieur à 90%.`,
+
+                html:
+                    `<p>Alerte automatique <strong>Valeo</strong>.</p>
 <ul>
-<li><strong>Produit :</strong> ${produit || 'N/A'}</li>
-<li><strong>Dernière quantité :</strong> ${quantite || 0}</li>
-<li><strong>Rendement :</strong> ${rendement || '?'}%</li>
-<li><strong>Heure :</strong> ${timestamp || new Date().toLocaleString('fr-FR')}</li>
+<li><strong>Produit :</strong> ${escapeXml(produit || 'N/A')}</li>
+<li><strong>Dernière quantité :</strong> ${escapeXml(quantite ?? 0)}</li>
+<li><strong>Rendement :</strong> ${escapeXml(rendement ?? '?')}%</li>
+<li><strong>Heure :</strong> ${escapeXml(timestamp || new Date().toLocaleString('fr-FR'))}</li>
 </ul>
 <p>Le rendement est inférieur à 90%.</p>`
-        };
+            };
 
-        await transporter.sendMail(mailOptions);
+            await transporter.sendMail(
+                mailOptions
+            );
 
-        res.json({
-            success: true,
-            message:
-                'Alerte email envoyée.'
-        });
-    } catch (error) {
-        console.error(
-            'Erreur envoi alerte email:',
-            error
-        );
+            res.json({
+                success: true,
+                message:
+                    'Alerte email envoyée.'
+            });
 
-        res.status(500).json({
-            success: false,
-            message:
-                'Impossible d\'envoyer l\'alerte email.'
-        });
+        } catch (error) {
+
+            console.error(
+                'Erreur envoi alerte email:',
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    'Impossible d\'envoyer l\'alerte email.'
+            });
+        }
     }
-});
+);
 
+app.post(
+    '/api/generate-xml',
+    async (req, res) => {
 
+        try {
 
-// ============================================================
-// API : GENERATION XML DE PRODUCTION
-// Quantity = Quantité Totale (en kits)
-// ============================================================
-app.post('/api/generate-xml', async (req, res) => {
-    try {
-        const { ProductNo, EventDateTime, Quantity } = req.body || {};
+            const {
+                ProductNo,
+                EventDateTime,
+                Quantity
+            } = req.body || {};
 
-        if (
-            ProductNo === undefined ||
-            ProductNo === null ||
-            String(ProductNo).trim() === ''
-        ) {
-            return res.status(400).json({
-                success: false,
-                error: 'ProductNo est requis.'
-            });
-        }
+            if (
+                ProductNo === undefined ||
+                ProductNo === null ||
+                String(ProductNo).trim() === ''
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'ProductNo est requis.'
+                });
+            }
 
-        const quantityTotal = normalizeNumeric(Quantity);
+            const quantityTotal =
+                normalizeNumeric(
+                    Quantity
+                );
 
-        if (!Number.isFinite(quantityTotal) || quantityTotal < 0) {
-            return res.status(400).json({
-                success: false,
-                error: 'Quantity est invalide.'
-            });
-        }
+            if (
+                !Number.isFinite(
+                    quantityTotal
+                ) ||
+                quantityTotal < 0
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Quantity est invalide.'
+                });
+            }
 
-        const formattedDateTime = formatXmlDateTime(EventDateTime);
+            const formattedDateTime =
+                formatXmlDateTime(
+                    EventDateTime
+                );
 
-        await fs.mkdir(XML_DIRECTORY, { recursive: true });
-
-        const now = new Date();
-        const datePart = [
-            now.getFullYear(),
-            String(now.getMonth() + 1).padStart(2, '0'),
-            String(now.getDate()).padStart(2, '0')
-        ].join('');
-
-        const timePart = [
-            String(now.getHours()).padStart(2, '0'),
-            String(now.getMinutes()).padStart(2, '0'),
-            String(now.getSeconds()).padStart(2, '0')
-        ].join('');
-
-        const randomPart = Math.random()
-            .toString(36)
-            .substring(2, 8)
-            .toUpperCase();
-
-        const safeProductName = String(ProductNo)
-            .trim()
-            .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
-            .replace(/\s+/g, '_');
-
-        const existingXmlFiles = await fs.readdir(XML_DIRECTORY);
-
-        for (const existingFile of existingXmlFiles) {
-            if (!existingFile.toLowerCase().endsWith('.xml')) continue;
-            if (!existingFile.startsWith('Production_')) continue;
-
-            const existingName = existingFile.slice('Production_'.length);
-            const dateIndex = existingName.indexOf('_20');
-
-            if (dateIndex === -1) continue;
-
-            const existingProductName = existingName.slice(0, dateIndex);
-
-            if (existingProductName !== safeProductName) {
-                const oldFilePath = path.join(XML_DIRECTORY, existingFile);
-
-                try {
-                    await fs.unlink(oldFilePath);
-                    console.log('✓ Ancien fichier XML supprimé :', existingFile);
-                } catch (deleteError) {
-                    if (deleteError.code !== 'ENOENT') {
-                        console.warn(
-                            '⚠ Impossible de supprimer le fichier XML précédent :',
-                            existingFile,
-                            deleteError.message
-                        );
-                    }
+            await fs.mkdir(
+                XML_DIRECTORY,
+                {
+                    recursive: true
                 }
-            }
+            );
+
+            const now =
+                new Date();
+
+            const datePart = [
+                now.getFullYear(),
+
+                String(
+                    now.getMonth() + 1
+                ).padStart(
+                    2,
+                    '0'
+                ),
+
+                String(
+                    now.getDate()
+                ).padStart(
+                    2,
+                    '0'
+                )
+            ].join('');
+
+            const timePart = [
+                String(
+                    now.getHours()
+                ).padStart(
+                    2,
+                    '0'
+                ),
+
+                String(
+                    now.getMinutes()
+                ).padStart(
+                    2,
+                    '0'
+                ),
+
+                String(
+                    now.getSeconds()
+                ).padStart(
+                    2,
+                    '0'
+                )
+            ].join('');
+
+            const randomPart =
+                Math.random()
+                    .toString(36)
+                    .substring(
+                        2,
+                        8
+                    )
+                    .toUpperCase();
+
+            const safeProductName =
+                String(ProductNo)
+                    .trim()
+                    .replace(
+                        /[<>:"/\\|?*\x00-\x1F]/g,
+                        '_'
+                    )
+                    .replace(
+                        /\s+/g,
+                        '_'
+                    );
+
+            const filename =
+                `Production_${safeProductName}_${datePart}_${timePart}_${randomPart}.xml`;
+
+            const filePath =
+                path.join(
+                    XML_DIRECTORY,
+                    filename
+                );
+
+            const xmlContent =
+                buildProductionXml(
+                    String(
+                        ProductNo
+                    ).trim(),
+
+                    formattedDateTime,
+
+                    quantityTotal
+                );
+
+            await fs.writeFile(
+                filePath,
+                xmlContent,
+                'utf8'
+            );
+
+            console.log(
+                'XML production généré :',
+                filePath
+            );
+
+            console.log(
+                'ProductNo :',
+                String(
+                    ProductNo
+                ).trim()
+            );
+
+            console.log(
+                'EventDateTime :',
+                formattedDateTime
+            );
+
+            console.log(
+                'Quantity :',
+                quantityTotal
+            );
+
+            return res.json({
+
+                success:
+                    true,
+
+                message:
+                    'Fichier XML généré avec succès.',
+
+                filename:
+                    filename,
+
+                path:
+                    filePath,
+
+                data: {
+
+                    ProductNo:
+                        String(
+                            ProductNo
+                        ).trim(),
+
+                    EventDateTime:
+                        formattedDateTime,
+
+                    Quantity:
+                        quantityTotal
+                }
+            });
+
+        } catch (error) {
+
+            console.error(
+                'Erreur génération XML :',
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    'Impossible de générer le fichier XML.'
+            });
         }
-
-        const filename =
-            `Production_${safeProductName}_${datePart}_${timePart}_${randomPart}.xml`;
-
-        const filePath = path.join(XML_DIRECTORY, filename);
-
-        const xmlContent = buildProductionXml(
-            String(ProductNo).trim(),
-            formattedDateTime,
-            quantityTotal
-        );
-
-        await fs.writeFile(filePath, xmlContent, 'utf8');
-
-        console.log('✓ XML production généré :', filePath);
-        console.log('  ProductNo :', String(ProductNo).trim());
-        console.log('  EventDateTime :', formattedDateTime);
-        console.log('  Quantity (Quantité Totale en kits) :', quantityTotal);
-
-        return res.json({
-            success: true,
-            message: 'Fichier XML généré avec succès.',
-            filename,
-            path: filePath,
-            data: {
-                ProductNo: String(ProductNo).trim(),
-                EventDateTime: formattedDateTime,
-                Quantity: quantityTotal
-            }
-        });
-    } catch (error) {
-        console.error('Erreur génération XML :', error);
-
-        return res.status(500).json({
-            success: false,
-            error: 'Impossible de générer le fichier XML.'
-        });
     }
-});
+);
 
-app.get('*', (req, res) => {
-    res.sendFile(
-        path.join(
-            __dirname,
-            '..',
-            'loading.html'
-        )
-    );
-});
+app.get(
+    '*',
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                '..',
+                'loading.html'
+            )
+        );
+    }
+);
 
 async function startServer() {
+
     try {
-        await fs.mkdir(XML_DIRECTORY, { recursive: true });
-        console.log('Dossier XML :', XML_DIRECTORY);
+
+        await fs.mkdir(
+            XML_DIRECTORY,
+            {
+                recursive: true
+            }
+        );
+
+        console.log(
+            'Dossier XML :',
+            XML_DIRECTORY
+        );
+
     } catch (error) {
-        console.error('Erreur création dossier XML :', error.message);
+
+        console.error(
+            'Erreur création dossier XML :',
+            error.message
+        );
     }
+
     try {
+
         await getDatabase();
 
         console.log(
             'Base de données initialisée'
         );
+
     } catch (error) {
+
         console.error(
             'Erreur base de données:',
             error.message
@@ -1485,6 +2154,7 @@ async function startServer() {
     app.listen(
         PORT,
         () => {
+
             console.log(
                 `Serveur Valeo démarré sur http://localhost:${PORT}`
             );
