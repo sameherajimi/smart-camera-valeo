@@ -31,11 +31,8 @@ const pythonCommand =
 const app = express();
 const PORT = 3000;
 
-const capturesDirectory =
-    path.join(__dirname, 'captures');
-
-const HISTORY_FILE =
-    path.join(__dirname, 'history.json');
+const capturesDirectory = path.join(__dirname, 'captures');
+const HISTORY_FILE = path.join(__dirname, 'history.json');
 
 const XML_DIRECTORY =
     process.env.VALEO_XML_DIRECTORY ||
@@ -81,11 +78,8 @@ function formatXmlDateTime(value) {
 
     let hours = date.getHours();
 
-    const minutes =
-        String(date.getMinutes()).padStart(2, '0');
-
-    const ampm =
-        hours >= 12 ? 'PM' : 'AM';
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
 
     hours = hours % 12 || 12;
 
@@ -171,21 +165,105 @@ function normalizeNumeric(value) {
     }
 
     if (typeof value === 'number') {
-        return Number.isFinite(value)
-            ? value
-            : 0;
+        return Number.isFinite(value) ? value : 0;
     }
 
-    const cleaned =
-        String(value)
-            .replace(/[^0-9.,-]/g, '')
-            .replace(',', '.');
+    const cleaned = String(value)
+        .replace(/[^0-9.,-]/g, '')
+        .replace(',', '.');
 
     const parsed = Number(cleaned);
 
-    return Number.isFinite(parsed)
-        ? parsed
-        : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeProductKey(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ');
+}
+
+function getDetectionQuantity(record) {
+    if (
+        record &&
+        record.quantite_non_cumulative !== undefined &&
+        record.quantite_non_cumulative !== null
+    ) {
+        return normalizeNumeric(
+            record.quantite_non_cumulative
+        );
+    }
+
+    if (
+        record &&
+        record.quantite_detection !== undefined &&
+        record.quantite_detection !== null
+    ) {
+        return normalizeNumeric(
+            record.quantite_detection
+        );
+    }
+
+    return normalizeNumeric(
+        record?.quantite
+    );
+}
+
+function calculateProductCumulative(history, product) {
+    const key = normalizeProductKey(product);
+
+    return history
+        .filter(record => {
+            return normalizeProductKey(
+                record.produit
+            ) === key;
+        })
+        .reduce((sum, record) => {
+            return sum + getDetectionQuantity(record);
+        }, 0);
+}
+
+function enrichHistoryRecords(history) {
+    const totals = new Map();
+
+    const chronological = [...history].reverse();
+
+    const enrichedChronological = chronological.map(record => {
+        const key = normalizeProductKey(
+            record.produit
+        );
+
+        const detectionQuantity =
+            getDetectionQuantity(record);
+
+        const previousTotal =
+            totals.get(key) || 0;
+
+        const cumulativeTotal =
+            previousTotal + detectionQuantity;
+
+        totals.set(
+            key,
+            cumulativeTotal
+        );
+
+        return {
+            ...record,
+            quantite_detection:
+                detectionQuantity,
+            quantite_non_cumulative:
+                detectionQuantity,
+            quantite_cumulative:
+                cumulativeTotal,
+            quantite_totale:
+                cumulativeTotal
+        };
+    });
+
+    return enrichedChronological.reverse();
 }
 
 function readBaseDonneesFromExcel(filePath) {
@@ -196,8 +274,7 @@ function readBaseDonneesFromExcel(filePath) {
         return [];
     }
 
-    const workbook =
-        XLSX.readFile(filePath);
+    const workbook = XLSX.readFile(filePath);
 
     const sheetName =
         workbook.SheetNames.find(
@@ -323,31 +400,24 @@ function readBaseDonneesFromExcel(filePath) {
                 rows.push({
                     id:
                         `EXCEL-${rows.length + 1}`,
-
                     date:
                         new Date()
                             .toLocaleDateString(
                                 'fr-FR'
                             ),
-
                     heure:
                         new Date()
                             .toLocaleTimeString(
                                 'fr-FR'
                             ),
-
                     produit:
                         cleanAlias,
-
                     quantite:
                         numericQuantity,
-
                     quantite_totale:
                         numericQuantity,
-
                     jigs_totales:
                         Number(jigsTotales) || 0,
-
                     taux:
                         `${Math.min(
                             100,
@@ -356,22 +426,20 @@ function readBaseDonneesFromExcel(filePath) {
                                 numericQuantity
                             )
                         )}%`,
-
                     jigs:
                         normalizeNumeric(
                             row[3] || 0
                         ),
-
                     kits:
                         normalizeNumeric(
                             row[4] || 0
                         ),
-
                     consommation:
                         normalizeNumeric(
                             row[6] || 0
                         ),
-
+                    famille:
+                        family || '—',
                     sheet:
                         'Table'
                 });
@@ -392,10 +460,11 @@ async function readHistoryFile() {
         const parsed =
             JSON.parse(raw);
 
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
 
+        return enrichHistoryRecords(parsed);
     } catch (error) {
         if (error.code === 'ENOENT') {
             return [];
@@ -411,10 +480,13 @@ async function readHistoryFile() {
 }
 
 async function writeHistoryFile(history) {
+    const normalizedHistory =
+        enrichHistoryRecords(history);
+
     await fs.writeFile(
         HISTORY_FILE,
         JSON.stringify(
-            history,
+            normalizedHistory,
             null,
             2
         ),
@@ -446,7 +518,6 @@ function findProductReference(product) {
                     .trim()
                     .toLowerCase() === target
             ) ||
-
             rows.find(row => {
                 const current =
                     String(
@@ -460,10 +531,8 @@ function findProductReference(product) {
                     target.includes(current)
                 );
             }) ||
-
             null
         );
-
     } catch (error) {
         console.error(
             'Erreur recherche référence produit:',
@@ -494,7 +563,6 @@ async function saveDetectionEvents(
                         String(
                             product || ''
                         ).trim(),
-
                     quantity:
                         normalizeNumeric(
                             quantity
@@ -514,7 +582,6 @@ async function saveDetectionEvents(
         await readHistoryFile();
 
     const saved = [];
-
     const now = new Date();
 
     const jigsDetectees =
@@ -536,7 +603,6 @@ async function saveDetectionEvents(
     }
 
     for (const item of validProducts) {
-
         const reference =
             findProductReference(
                 item.product
@@ -554,27 +620,10 @@ async function saveDetectionEvents(
             '—';
 
         const previousTotal =
-            history
-                .filter(record =>
-                    String(
-                        record.produit || ''
-                    )
-                        .trim()
-                        .toLowerCase() ===
-                    item.product
-                        .toLowerCase()
-                )
-                .reduce(
-                    (
-                        sum,
-                        record
-                    ) =>
-                        sum +
-                        normalizeNumeric(
-                            record.quantite
-                        ),
-                    0
-                );
+            calculateProductCumulative(
+                history,
+                item.product
+            );
 
         const totalLoading =
             previousTotal +
@@ -614,50 +663,43 @@ async function saveDetectionEvents(
                     .toString(36)
                     .slice(2, 8)
                     .toUpperCase()}`,
-
             date:
                 now.toLocaleDateString(
                     'fr-FR'
                 ),
-
             heure:
                 now.toLocaleTimeString(
                     'fr-FR'
                 ),
-
             timestamp:
                 now.toISOString(),
-
             produit:
                 item.product,
-
             famille:
                 family,
-
             quantite:
                 item.quantity,
-
+            quantite_detection:
+                item.quantity,
+            quantite_non_cumulative:
+                item.quantity,
+            quantite_cumulative:
+                totalLoading,
             quantite_totale:
                 totalLoading,
-
             chargement_total:
                 jigsDetectees,
-
             jigs_detectees:
                 jigsDetectees,
-
             jigs_totales:
                 jigsTotal,
-
             rendement:
                 rendement,
-
             taux:
                 `${rendement}%`
         };
 
         history.unshift(record);
-
         saved.push(record);
     }
 
@@ -682,7 +724,6 @@ app.get(
                 success: true,
                 history
             });
-
         } catch (error) {
             console.error(
                 'Erreur API historique:',
@@ -692,7 +733,7 @@ app.get(
             res.status(500).json({
                 success: false,
                 message:
-                    'Impossible de charger l\'historique.',
+                    "Impossible de charger l'historique.",
                 history: []
             });
         }
@@ -720,6 +761,11 @@ app.post(
             const history =
                 await readHistoryFile();
 
+            const product =
+                String(
+                    record.produit || ''
+                ).trim();
+
             const jigsDetectees =
                 normalizeNumeric(
                     record.jigs_detectees ??
@@ -738,64 +784,82 @@ app.post(
                     0
                 );
 
+            const detectionQuantity =
+                normalizeNumeric(
+                    record.quantite_non_cumulative ??
+                    record.quantite_detection ??
+                    record.quantite
+                );
+
+            const previousTotal =
+                calculateProductCumulative(
+                    history,
+                    product
+                );
+
+            const cumulativeTotal =
+                previousTotal +
+                detectionQuantity;
+
+            const reference =
+                findProductReference(
+                    product
+                ) || {};
+
+            const family =
+                record.famille ||
+                reference.famille ||
+                '—';
+
+            const jigsTotal =
+                normalizeNumeric(
+                    record.jigs_totales ??
+                    reference.jigs_totales ??
+                    reference.jigs ??
+                    0
+                );
+
             const newRecord = {
                 id:
                     `VAL-${Date.now()}-${Math.random()
                         .toString(36)
                         .slice(2, 8)
                         .toUpperCase()}`,
-
                 date:
                     new Date()
                         .toLocaleDateString(
                             'fr-FR'
                         ),
-
                 heure:
                     new Date()
                         .toLocaleTimeString(
                             'fr-FR'
                         ),
-
                 timestamp:
                     new Date().toISOString(),
-
                 produit:
-                    String(
-                        record.produit || ''
-                    ).trim(),
-
+                    product,
                 famille:
-                    record.famille ||
-                    '—',
-
+                    family,
                 quantite:
-                    normalizeNumeric(
-                        record.quantite
-                    ),
-
+                    detectionQuantity,
+                quantite_detection:
+                    detectionQuantity,
+                quantite_non_cumulative:
+                    detectionQuantity,
+                quantite_cumulative:
+                    cumulativeTotal,
                 quantite_totale:
-                    normalizeNumeric(
-                        record.quantite_totale ??
-                        record.quantite
-                    ),
-
+                    cumulativeTotal,
                 chargement_total:
                     jigsDetectees,
-
                 jigs_detectees:
                     jigsDetectees,
-
                 jigs_totales:
-                    normalizeNumeric(
-                        record.jigs_totales
-                    ),
-
+                    jigsTotal,
                 rendement:
                     rendement,
-
                 taux:
-                    record.taux ||
                     `${rendement}%`
             };
 
@@ -812,9 +876,9 @@ app.post(
 
             res.json({
                 success: true,
-                record: newRecord
+                record:
+                    newRecord
             });
-
         } catch (error) {
             console.error(
                 'Erreur API historique POST:',
@@ -824,7 +888,7 @@ app.post(
             res.status(500).json({
                 success: false,
                 message:
-                    'Impossible de sauvegarder dans l\'historique.'
+                    "Impossible de sauvegarder dans l'historique."
             });
         }
     }
@@ -848,7 +912,6 @@ app.get(
                 data:
                     rows
             });
-
         } catch (error) {
             console.error(
                 'Erreur lecture Excel serveur:',
@@ -883,40 +946,28 @@ app.get(
                 success: true,
                 capture:
                     'test-capture.jpg',
-
                 detections: [
                     {
                         product:
                             testProduct,
-
                         confidence:
                             0.95,
-
                         x: null,
                         y: null,
                         width: null,
                         height: null,
-
                         model:
                             'primary'
                     }
                 ],
-
                 counts: {
                     [testProduct]: 1
                 },
-
                 jig_detections: [],
-
-                jig_count:
-                    0,
-
+                jig_count: 0,
                 jig_counts: {},
-
-                test:
-                    true
+                test: true
             });
-
         } catch (error) {
             console.error(
                 'Test detection error:',
@@ -927,57 +978,31 @@ app.get(
                 success: true,
                 capture:
                     'test-capture.jpg',
-
                 detections: [
                     {
                         product:
                             'PRODUIT_TEST',
-
                         confidence:
                             0.95,
-
                         x: null,
                         y: null,
                         width: null,
                         height: null,
-
                         model:
                             'primary'
                     }
                 ],
-
                 counts: {
                     PRODUIT_TEST: 1
                 },
-
                 jig_detections: [],
-
-                jig_count:
-                    0,
-
+                jig_count: 0,
                 jig_counts: {},
-
-                test:
-                    true
+                test: true
             });
         }
     }
 );
-
-/*
- * ============================================================
- * COGNEX
- * ============================================================
- *
- * Seule cette partie a été corrigée.
- *
- * Le script cognex_camera.py :
- * - se connecte à la caméra
- * - capture l'image
- * - retourne le JSON dans stdout
- *
- * Les logs Python sont dans stderr.
- */
 
 let cognexLatestFrame = null;
 let cognexCaptureRunning = false;
@@ -993,7 +1018,10 @@ async function executeCognexCapture() {
 
     try {
         const cognexScript =
-            path.join(__dirname, 'cognex_camera.py');
+            path.join(
+                __dirname,
+                'cognex_camera.py'
+            );
 
         if (!fsSync.existsSync(cognexScript)) {
             throw new Error(
@@ -1008,25 +1036,33 @@ async function executeCognexCapture() {
                 {
                     cwd: __dirname,
                     timeout: 15000,
-                    maxBuffer: 50 * 1024 * 1024,
+                    maxBuffer:
+                        50 * 1024 * 1024,
                     windowsHide: true,
                     env: process.env
                 }
             );
 
         const stdout =
-            String(result.stdout || '').trim();
+            String(
+                result.stdout || ''
+            ).trim();
 
         const stderr =
-            String(result.stderr || '').trim();
+            String(
+                result.stderr || ''
+            ).trim();
 
         if (stderr) {
-            console.log('[COGNEX]', stderr);
+            console.log(
+                '[COGNEX]',
+                stderr
+            );
         }
 
         if (!stdout) {
             throw new Error(
-                'cognex_camera.py n\'a retourné aucun résultat.'
+                "cognex_camera.py n'a retourné aucun résultat."
             );
         }
 
@@ -1038,9 +1074,16 @@ async function executeCognexCapture() {
 
         let cognexResult = null;
 
-        for (let i = lines.length - 1; i >= 0; i--) {
+        for (
+            let i = lines.length - 1;
+            i >= 0;
+            i--
+        ) {
             try {
-                const parsed = JSON.parse(lines[i]);
+                const parsed =
+                    JSON.parse(
+                        lines[i]
+                    );
 
                 if (
                     parsed &&
@@ -1058,7 +1101,9 @@ async function executeCognexCapture() {
             );
         }
 
-        if (cognexResult.success !== true) {
+        if (
+            cognexResult.success !== true
+        ) {
             throw new Error(
                 cognexResult.error ||
                 'Capture Cognex échouée.'
@@ -1070,24 +1115,32 @@ async function executeCognexCapture() {
             typeof cognexResult.image !== 'string'
         ) {
             throw new Error(
-                'La caméra Cognex a répondu mais aucune image n\'a été reçue.'
+                "La caméra Cognex a répondu mais aucune image n'a été reçue."
             );
         }
 
         cognexLatestFrame = {
             success: true,
-            image: cognexResult.image,
-            width: Number(cognexResult.width) || 640,
-            height: Number(cognexResult.height) || 480,
-            timestamp: Date.now()
+            image:
+                cognexResult.image,
+            width:
+                Number(
+                    cognexResult.width
+                ) || 640,
+            height:
+                Number(
+                    cognexResult.height
+                ) || 480,
+            timestamp:
+                Date.now()
         };
 
         cognexLastCaptureError = null;
 
         return cognexLatestFrame;
-
     } catch (error) {
-        cognexLastCaptureError = error;
+        cognexLastCaptureError =
+            error;
 
         console.error(
             '[COGNEX] Erreur :',
@@ -1109,7 +1162,6 @@ async function executeCognexCapture() {
         }
 
         return cognexLatestFrame;
-
     } finally {
         cognexCaptureRunning = false;
     }
@@ -1122,11 +1174,13 @@ function startCognexCaptureLoop() {
 
     cognexCaptureLoopStarted = true;
 
-    executeCognexCapture().catch(() => {});
+    executeCognexCapture()
+        .catch(() => {});
 
     setInterval(() => {
         if (!cognexCaptureRunning) {
-            executeCognexCapture().catch(() => {});
+            executeCognexCapture()
+                .catch(() => {});
         }
     }, 150);
 }
@@ -1140,10 +1194,14 @@ app.post(
             if (cognexLatestFrame) {
                 return res.status(200).json({
                     success: true,
-                    image: cognexLatestFrame.image,
-                    width: cognexLatestFrame.width,
-                    height: cognexLatestFrame.height,
-                    timestamp: cognexLatestFrame.timestamp,
+                    image:
+                        cognexLatestFrame.image,
+                    width:
+                        cognexLatestFrame.width,
+                    height:
+                        cognexLatestFrame.height,
+                    timestamp:
+                        cognexLatestFrame.timestamp,
                     stream: true
                 });
             }
@@ -1162,16 +1220,19 @@ app.post(
 
             return res.status(200).json({
                 success: true,
-                image: frame.image,
-                width: frame.width,
-                height: frame.height,
-                timestamp: frame.timestamp,
+                image:
+                    frame.image,
+                width:
+                    frame.width,
+                height:
+                    frame.height,
+                timestamp:
+                    frame.timestamp,
                 stream: true
             });
-
         } catch (error) {
             console.error(
-                '[COGNEX] Erreur endpoint :',
+                '[COGNEX] Erreur endpoint:',
                 error.message
             );
 
@@ -1207,12 +1268,15 @@ app.get(
 
             return res.status(200).json({
                 success: true,
-                image: cognexLatestFrame.image,
-                width: cognexLatestFrame.width,
-                height: cognexLatestFrame.height,
-                timestamp: cognexLatestFrame.timestamp
+                image:
+                    cognexLatestFrame.image,
+                width:
+                    cognexLatestFrame.width,
+                height:
+                    cognexLatestFrame.height,
+                timestamp:
+                    cognexLatestFrame.timestamp
             });
-
         } catch (error) {
             return res.status(500).json({
                 success: false,
@@ -1328,10 +1392,8 @@ app.post(
                         {
                             timeout:
                                 120000,
-
                             maxBuffer:
                                 4 * 1024 * 1024,
-
                             env:
                                 process.env
                         }
@@ -1345,12 +1407,13 @@ app.post(
                 }
 
                 const output =
-                    String(stdout || '')
-                        .trim();
+                    String(
+                        stdout || ''
+                    ).trim();
 
                 if (!output) {
                     throw new Error(
-                        'inference.py n\'a retourné aucun résultat JSON.'
+                        "inference.py n'a retourné aucun résultat JSON."
                     );
                 }
 
@@ -1382,10 +1445,8 @@ app.post(
                         ) {
                             inference =
                                 parsed;
-
                             break;
                         }
-
                     } catch (_) {}
                 }
 
@@ -1409,19 +1470,14 @@ app.post(
 
                 return res.json({
                     success: true,
-
                     capture:
                         captureName,
-
                     ...inference,
-
                     historySaved:
                         savedHistory.length > 0,
-
                     historyRecords:
                         savedHistory
                 });
-
             } catch (inferenceError) {
                 console.error(
                     'Erreur inference.py:',
@@ -1448,25 +1504,17 @@ app.post(
 
                 return res.status(500).json({
                     success: false,
-
                     capture:
                         captureName,
-
                     detections: [],
-
                     counts: {},
-
                     jig_detections: [],
-
                     jig_count: 0,
-
                     jig_counts: {},
-
                     message:
                         `Erreur lors de l'exécution des modèles IA : ${inferenceError.message}`
                 });
             }
-
         } catch (error) {
             console.error(
                 'Inference error:',
@@ -1475,22 +1523,15 @@ app.post(
 
             return res.status(500).json({
                 success: false,
-
                 capture:
                     'unknown',
-
                 detections: [],
-
                 counts: {},
-
                 jig_detections: [],
-
                 jig_count: 0,
-
                 jig_counts: {},
-
                 message:
-                    'Erreur serveur lors du traitement de l\'image.'
+                    "Erreur serveur lors du traitement de l'image."
             });
         }
     }
@@ -1531,7 +1572,7 @@ app.post(
                 return res.status(400).json({
                     success: false,
                     message:
-                        'Format d\'email invalide.'
+                        "Format d'email invalide."
                 });
             }
 
@@ -1592,15 +1633,11 @@ app.post(
 
             res.status(201).json({
                 success: true,
-
                 message:
                     'Compte créé avec succès.',
-
                 loginCode,
-
                 userId
             });
-
         } catch (error) {
             console.error(
                 'Signup error:',
@@ -1664,34 +1701,25 @@ app.post(
 
             res.json({
                 success: true,
-
                 message:
                     'Connexion réussie.',
-
                 user: {
                     id:
                         user.id,
-
                     firstName:
                         user.first_name,
-
                     lastName:
                         user.last_name,
-
                     email:
                         user.email || '',
-
                     role:
                         user.role,
-
                     loginCode:
                         user.login_code,
-
                     isAdmin:
                         user.is_admin === 1
                 }
             });
-
         } catch (error) {
             console.error(
                 'Login error:',
@@ -1718,7 +1746,6 @@ app.get(
                 success: true,
                 users
             });
-
         } catch (error) {
             console.error(
                 'Get users error:',
@@ -1759,7 +1786,6 @@ app.delete(
                 message:
                     'Utilisateur supprimé.'
             });
-
         } catch (error) {
             console.error(
                 'Delete user error:',
@@ -1815,7 +1841,6 @@ app.put(
                 message:
                     'Rôle mis à jour.'
             });
-
         } catch (error) {
             console.error(
                 'Update role error:',
@@ -1862,31 +1887,23 @@ app.get(
 
             res.json({
                 success: true,
-
                 user: {
                     id:
                         user.id,
-
                     firstName:
                         user.first_name,
-
                     lastName:
                         user.last_name,
-
                     email:
                         user.email,
-
                     role:
                         user.role,
-
                     loginCode:
                         user.login_code,
-
                     isAdmin:
                         user.is_admin === 1
                 }
             });
-
         } catch (error) {
             console.error(
                 'Get user error:',
@@ -1985,7 +2002,6 @@ app.put(
                 message:
                     'Mot de passe modifié avec succès.'
             });
-
         } catch (error) {
             console.error(
                 'Change password error:',
@@ -2052,7 +2068,7 @@ app.put(
                 return res.status(400).json({
                     success: false,
                     message:
-                        'Format d\'email invalide.'
+                        "Format d'email invalide."
                 });
             }
 
@@ -2069,7 +2085,6 @@ app.put(
                 message:
                     'Profil mis à jour avec succès.'
             });
-
         } catch (error) {
             console.error(
                 'Update profile error:',
@@ -2099,11 +2114,9 @@ app.post(
             const transporter =
                 nodemailer.createTransport({
                     service: 'gmail',
-
                     auth: {
                         user:
                             process.env.VALEO_ALERT_EMAIL,
-
                         pass:
                             process.env.VALEO_ALERT_PASSWORD
                     }
@@ -2113,13 +2126,10 @@ app.post(
                 from:
                     process.env.VALEO_ALERT_EMAIL ||
                     'alerte@valeo.local',
-
                 to:
                     'sameher.ajimi@enis.tn',
-
                 subject:
                     `Alerte Valeo : Rendement ${rendement ?? '?'}% < 90% - ${produit || 'Produit inconnu'}`,
-
                 text:
                     `Alerte automatique Valeo.
 
@@ -2132,7 +2142,6 @@ Rendement : ${rendement ?? '?'}%
 Heure : ${timestamp || new Date().toLocaleString('fr-FR')}
 
 Le rendement est inférieur à 90%.`,
-
                 html:
                     `<p>Alerte automatique <strong>Valeo</strong>.</p>
 <ul>
@@ -2153,7 +2162,6 @@ Le rendement est inférieur à 90%.`,
                 message:
                     'Alerte email envoyée.'
             });
-
         } catch (error) {
             console.error(
                 'Erreur envoi alerte email:',
@@ -2163,7 +2171,7 @@ Le rendement est inférieur à 90%.`,
             res.status(500).json({
                 success: false,
                 message:
-                    'Impossible d\'envoyer l\'alerte email.'
+                    "Impossible d'envoyer l'alerte email."
             });
         }
     }
@@ -2225,14 +2233,12 @@ app.post(
 
             const datePart = [
                 now.getFullYear(),
-
                 String(
                     now.getMonth() + 1
                 ).padStart(
                     2,
                     '0'
                 ),
-
                 String(
                     now.getDate()
                 ).padStart(
@@ -2248,14 +2254,12 @@ app.post(
                     2,
                     '0'
                 ),
-
                 String(
                     now.getMinutes()
                 ).padStart(
                     2,
                     '0'
                 ),
-
                 String(
                     now.getSeconds()
                 ).padStart(
@@ -2299,9 +2303,7 @@ app.post(
                     String(
                         ProductNo
                     ).trim(),
-
                     formattedDateTime,
-
                     quantityTotal
                 );
 
@@ -2318,29 +2320,22 @@ app.post(
 
             res.json({
                 success: true,
-
                 message:
                     'Fichier XML généré avec succès.',
-
                 filename,
-
                 path:
                     filePath,
-
                 data: {
                     ProductNo:
                         String(
                             ProductNo
                         ).trim(),
-
                     EventDateTime:
                         formattedDateTime,
-
                     Quantity:
                         quantityTotal
                 }
             });
-
         } catch (error) {
             console.error(
                 'Erreur génération XML :',
@@ -2382,7 +2377,6 @@ async function startServer() {
             'Dossier XML :',
             XML_DIRECTORY
         );
-
     } catch (error) {
         console.error(
             'Erreur création dossier XML:',
@@ -2396,7 +2390,6 @@ async function startServer() {
         console.log(
             'Base de données initialisée'
         );
-
     } catch (error) {
         console.error(
             'Erreur base de données:',
