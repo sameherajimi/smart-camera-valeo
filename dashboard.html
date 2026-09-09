@@ -1414,7 +1414,7 @@
 
                         <button id="cognex-camera-btn"
                                 class="ctrl-btn ctrl-btn-cognex"
-                                onclick="connectCognex()">
+                                onclick="captureCognex()">
 
                             <i class="fa-solid fa-industry"></i>
 
@@ -1619,6 +1619,8 @@
 
     let importedImageData = null;
     let cognexImageData = null;
+    let cognexStreamTimer = null;
+    let cognexFrameBusy = false;
 
     let analysisTimer = null;
     let isAnalyzing = false;
@@ -1629,6 +1631,7 @@
     let selectedCameraId = '';
 
     const ANALYSIS_INTERVAL_MS = 10000;
+    const COGNEX_FRAME_INTERVAL_MS = 250;
     const ANALYSIS_TIMEOUT_MS = 10000;
 
     const DASHBOARD_STATE_KEY =
@@ -4495,13 +4498,170 @@
 
        ========================================================= */
 
-    async function captureCognex() {
+    async function updateCognexFrame() {
 
-        if (detectionInProgress) {
-
+        if (cognexFrameBusy || !cognexActive) {
             return;
-
         }
+
+        cognexFrameBusy = true;
+
+        try {
+
+            const response =
+                await fetch(
+                    '/api/cognex/capture',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        cache: 'no-store'
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.error ||
+                    data.message ||
+                    'Capture Cognex impossible'
+                );
+            }
+
+            const imageData =
+                data.image ||
+                data.imageData ||
+                data.capture;
+
+            if (!imageData) {
+                throw new Error(
+                    'Aucune image Cognex reçue.'
+                );
+            }
+
+            cognexImageData = imageData;
+            currentImageSource = 'cognex';
+
+            if (data.width && data.height) {
+                lastFrameSize = {
+                    width: Number(data.width),
+                    height: Number(data.height)
+                };
+            }
+
+            const previewImg =
+                document.getElementById(
+                    'imported-photo-preview'
+                );
+
+            const cognexPreview =
+                document.getElementById(
+                    'cognex-photo-preview'
+                );
+
+            const video =
+                document.getElementById(
+                    'camera-video'
+                );
+
+            const noSignal =
+                document.getElementById(
+                    'no-signal-overlay'
+                );
+
+            if (video) {
+                video.style.display = 'none';
+            }
+
+            if (previewImg) {
+                previewImg.style.display = 'none';
+            }
+
+            if (cognexPreview) {
+                cognexPreview.src = imageData;
+                cognexPreview.style.display = 'block';
+            }
+
+            if (noSignal) {
+                noSignal.style.display = 'none';
+            }
+
+            const indicator =
+                document.getElementById(
+                    'cam-rec-indicator'
+                );
+
+            if (indicator) {
+                indicator.innerHTML =
+                    '<i class="fa-solid fa-circle" style="color: var(--accent-red); font-size: 8px;"></i> LIVE COGNEX';
+            }
+
+            const stats =
+                document.getElementById(
+                    'cam-stats-overlay'
+                );
+
+            if (stats) {
+                stats.textContent =
+                    `COGNEX LIVE — ${data.width || lastFrameSize.width}x${data.height || lastFrameSize.height}`;
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Erreur flux Cognex:',
+                error
+            );
+
+            if (cognexActive) {
+                const stats =
+                    document.getElementById(
+                        'cam-stats-overlay'
+                    );
+
+                if (stats) {
+                    stats.textContent =
+                        `ERREUR COGNEX: ${error.message}`;
+                }
+            }
+
+        } finally {
+            cognexFrameBusy = false;
+        }
+    }
+
+
+    function startCognexStream() {
+
+        if (cognexStreamTimer) {
+            return;
+        }
+
+        updateCognexFrame();
+
+        cognexStreamTimer =
+            setInterval(
+                updateCognexFrame,
+                COGNEX_FRAME_INTERVAL_MS
+            );
+    }
+
+
+    function stopCognexStream() {
+
+        if (cognexStreamTimer) {
+            clearInterval(cognexStreamTimer);
+            cognexStreamTimer = null;
+        }
+
+        cognexFrameBusy = false;
+    }
+
+
+    async function captureCognex() {
 
         const button =
             document.getElementById(
@@ -4516,221 +4676,53 @@
         try {
 
             if (button) {
-
-                button.disabled =
-                    true;
-
+                button.disabled = true;
                 button.innerHTML =
                     '<i class="fa-solid fa-spinner fa-spin"></i> Connexion Cognex...';
-
             }
 
             if (stats) {
-
                 stats.textContent =
                     'Connexion à la caméra Cognex...';
-
             }
-
-            /*
-                Si caméra PC active,
-                on l'arrête.
-            */
 
             if (cameraActive) {
-
-                await toggleCamera(
-                    false
-                );
-
+                await toggleCamera(false);
             }
 
-            const response =
-                await fetch(
-                    '/api/cognex/capture',
-                    {
-                        method: 'POST',
-
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        }
-                    }
-                );
-
-            const data =
-                await response.json();
-
-            if (
-                !response.ok ||
-                !data.success
-            ) {
-
-                throw new Error(
-                    data.error ||
-                    data.message ||
-                    'Capture Cognex impossible'
-                );
-
-            }
-
-            /*
-                L'API peut retourner :
-
-                data.image
-                ou
-                data.imageData
-                ou
-                data.capture
-            */
-
-            const imageData =
-                data.image ||
-                data.imageData ||
-                data.capture;
-
-            if (!imageData) {
-
-                throw new Error(
-                    'La caméra Cognex a répondu mais aucune image n’a été reçue.'
-                );
-
-            }
-
-            cognexImageData =
-                imageData;
-
-            importedImageData =
-                imageData;
-
-            currentImageSource =
-                'cognex';
-
-            cognexActive =
-                true;
-
-            lastFrameSize =
-                {
-                    width:
-                        data.width ||
-                        lastFrameSize.width,
-
-                    height:
-                        data.height ||
-                        lastFrameSize.height
-                };
-
-            /*
-                Si les dimensions ne sont pas
-                retournées par le backend,
-                on les récupère depuis l'image.
-            */
-
-            if (
-                !lastFrameSize.width ||
-                !lastFrameSize.height
-            ) {
-
-                try {
-
-                    const dimensions =
-                        await getImageDimensions(
-                            imageData
-                        );
-
-                    lastFrameSize = {
-
-                        width:
-                            dimensions.width,
-
-                        height:
-                            dimensions.height
-
-                    };
-
-                } catch (error) {
-
-                    console.warn(
-                        'Dimensions Cognex indisponibles:',
-                        error
-                    );
-
-                }
-
-            }
-
-            clearDetectionBoxes();
+            importedImageData = null;
+            currentImageSource = 'cognex';
+            cognexActive = true;
 
             const previewImg =
                 document.getElementById(
                     'imported-photo-preview'
                 );
 
-            const video =
-                document.getElementById(
-                    'camera-video'
-                );
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.style.display = 'none';
+            }
+
+            updateCognexStatus(true);
 
             const noSignal =
                 document.getElementById(
                     'no-signal-overlay'
                 );
 
-            if (video) {
-
-                video.style.display =
-                    'none';
-
-            }
-
             if (noSignal) {
-
-                noSignal.style.display =
-                    'none';
-
+                noSignal.style.display = 'none';
             }
 
-            /*
-                On utilise le même espace
-                d'affichage que l'image importée.
-            */
+            startCognexStream();
 
-            if (previewImg) {
-
-                previewImg.src =
-                    imageData;
-
-                previewImg.style.display =
-                    'block';
-
+            if (button) {
+                button.innerHTML =
+                    '<i class="fa-solid fa-industry"></i> Cognex LIVE';
             }
 
-            updateCognexStatus(
-                true
-            );
-
-            const indicator =
-                document.getElementById(
-                    'cam-rec-indicator'
-                );
-
-            if (indicator) {
-
-                indicator.innerHTML =
-                    '<i class="fa-solid fa-industry" style="color: var(--valeo-lime); font-size: 8px;"></i> COGNEX';
-
-            }
-
-            if (stats) {
-
-                stats.textContent =
-                    '📷 Image capturée par Cognex — appuyez sur « Déclencher la détection »';
-
-            }
-
-            console.log(
-                '✓ Image Cognex reçue'
-            );
+            saveDashboardState();
 
         } catch (error) {
 
@@ -4739,39 +4731,41 @@
                 error
             );
 
-            cognexActive =
-                false;
-
-            cognexImageData =
-                null;
+            stopCognexStream();
+            cognexActive = false;
+            cognexImageData = null;
+            currentImageSource = 'none';
+            updateCognexStatus(false);
 
             if (stats) {
-
                 stats.textContent =
                     `ERREUR COGNEX: ${error.message}`;
-
             }
 
             alert(
-                `Impossible de capturer avec la caméra Cognex.\n\n${error.message}`
+                `Impossible de connecter la caméra Cognex.\n\n${error.message}`
             );
 
         } finally {
 
             if (button) {
+                button.disabled = false;
 
-                button.disabled =
-                    false;
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-industry"></i> Caméra Cognex';
-
+                if (cognexActive) {
+                    button.innerHTML =
+                        '<i class="fa-solid fa-industry"></i> Cognex LIVE';
+                } else {
+                    button.innerHTML =
+                        '<i class="fa-solid fa-industry"></i> Caméra Cognex';
+                }
             }
-
         }
-
     }
 
+
+    function connectCognex() {
+        return captureCognex();
+    }
 
     /* =========================================================
        DÉTECTION IA
