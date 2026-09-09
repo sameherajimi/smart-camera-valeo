@@ -52,6 +52,11 @@ const BASE_DATA_PATH =
         'BASE DONNEES (1).xlsx'
     );
 
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+
 function escapeXml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -61,7 +66,9 @@ function escapeXml(value) {
         .replace(/'/g, '&apos;');
 }
 
+
 function formatXmlDateTime(value) {
+
     const date = value
         ? new Date(value)
         : new Date();
@@ -87,47 +94,69 @@ function formatXmlDateTime(value) {
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
 }
 
+
 function buildProductionXml(
     productNo,
     eventDateTime,
     quantityTotal
 ) {
+
     return `<?xml version="1.0" encoding="UTF-8"?>
-<FSA_INT_FlatFileManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="${XML_SCHEMA_PATH}" Version="1.0">
+<FSA_INT_FlatFileManager
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="${XML_SCHEMA_PATH}"
+    Version="1.0">
+
 <FIInvocationSynchronousEvent NodeType="FIInvocation">
+
 <StandardOperation>
 <OperationResolutionMethod>ByOperationCode</OperationResolutionMethod>
 <OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode>
 </StandardOperation>
+
 <Parameters>
+
 <Inputs>
 <InputName>WorkCenter</InputName>
 <InputValue>EC002000</InputValue>
 </Inputs>
+
 <Inputs>
 <InputName>ProductNo</InputName>
 <InputValue>${escapeXml(productNo)}</InputValue>
 </Inputs>
+
 <Inputs>
 <InputName>EventDateTime</InputName>
 <InputValue>${escapeXml(eventDateTime)}</InputValue>
 </Inputs>
+
 <Inputs>
 <InputName>SerialNo</InputName>
 <InputValue>AAAA</InputValue>
 </Inputs>
+
 <Inputs>
 <InputName>Quantity</InputName>
 <InputValue>${escapeXml(quantityTotal)}</InputValue>
 </Inputs>
+
 <Inputs>
 <InputName>CycleTime</InputName>
 <InputValue>245</InputValue>
 </Inputs>
+
 </Parameters>
+
 </FIInvocationSynchronousEvent>
+
 </FSA_INT_FlatFileManager>`;
 }
+
+
+// ============================================================
+// MIDDLEWARE
+// ============================================================
 
 app.use(cors());
 
@@ -143,7 +172,13 @@ app.use(
     )
 );
 
+
+// ============================================================
+// EXCEL
+// ============================================================
+
 function normalizeHeader(value) {
+
     return String(value || '')
         .toLowerCase()
         .normalize('NFD')
@@ -153,7 +188,9 @@ function normalizeHeader(value) {
         .trim();
 }
 
+
 function normalizeNumeric(value) {
+
     if (
         value === null ||
         value === undefined ||
@@ -163,6 +200,7 @@ function normalizeNumeric(value) {
     }
 
     if (typeof value === 'number') {
+
         return Number.isFinite(value)
             ? value
             : 0;
@@ -173,15 +211,16 @@ function normalizeNumeric(value) {
             .replace(/[^0-9.,-]/g, '')
             .replace(',', '.');
 
-    const parsed =
-        Number(cleaned);
+    const parsed = Number(cleaned);
 
     return Number.isFinite(parsed)
         ? parsed
         : 0;
 }
 
+
 function readBaseDonneesFromExcel(filePath) {
+
     if (
         !filePath ||
         !fsSync.existsSync(filePath)
@@ -232,6 +271,7 @@ function readBaseDonneesFromExcel(filePath) {
     rowsArray
         .slice(2)
         .forEach(row => {
+
             if (!Array.isArray(row)) {
                 return;
             }
@@ -267,8 +307,7 @@ function readBaseDonneesFromExcel(filePath) {
                 return;
             }
 
-            const aliases =
-                new Set();
+            const aliases = new Set();
 
             if (product) {
                 aliases.add(product);
@@ -278,6 +317,7 @@ function readBaseDonneesFromExcel(filePath) {
                 family &&
                 product
             ) {
+
                 aliases.add(
                     `${family} ${product}`
                 );
@@ -295,6 +335,7 @@ function readBaseDonneesFromExcel(filePath) {
             }
 
             aliases.forEach(alias => {
+
                 const cleanAlias =
                     String(alias).trim();
 
@@ -315,6 +356,7 @@ function readBaseDonneesFromExcel(filePath) {
                     Number(quantite) || 0;
 
                 rows.push({
+
                     id:
                         `EXCEL-${rows.length + 1}`,
 
@@ -375,8 +417,15 @@ function readBaseDonneesFromExcel(filePath) {
     return rows;
 }
 
+
+// ============================================================
+// HISTORIQUE
+// ============================================================
+
 async function readHistoryFile() {
+
     try {
+
         const raw =
             await fs.readFile(
                 HISTORY_FILE,
@@ -391,6 +440,7 @@ async function readHistoryFile() {
             : [];
 
     } catch (error) {
+
         if (error.code === 'ENOENT') {
             return [];
         }
@@ -404,7 +454,9 @@ async function readHistoryFile() {
     }
 }
 
+
 async function writeHistoryFile(history) {
+
     await fs.writeFile(
         HISTORY_FILE,
         JSON.stringify(
@@ -416,7 +468,9 @@ async function writeHistoryFile(history) {
     );
 }
 
+
 function findProductReference(product) {
+
     const target =
         String(product || '')
             .trim()
@@ -427,6 +481,7 @@ function findProductReference(product) {
     }
 
     try {
+
         const rows =
             readBaseDonneesFromExcel(
                 BASE_DATA_PATH
@@ -438,11 +493,11 @@ function findProductReference(product) {
                     row.produit || ''
                 )
                     .trim()
-                    .toLowerCase() ===
-                target
+                    .toLowerCase() === target
             ) ||
 
             rows.find(row => {
+
                 const current =
                     String(
                         row.produit || ''
@@ -460,6 +515,7 @@ function findProductReference(product) {
         );
 
     } catch (error) {
+
         console.error(
             'Erreur recherche référence produit:',
             error.message
@@ -469,7 +525,9 @@ function findProductReference(product) {
     }
 }
 
+
 async function saveDetectionEvents(counts) {
+
     if (
         !counts ||
         typeof counts !== 'object'
@@ -506,12 +564,10 @@ async function saveDetectionEvents(counts) {
 
     const saved = [];
 
-    const now =
-        new Date();
+    const now = new Date();
 
-    for (
-        const item of validProducts
-    ) {
+    for (const item of validProducts) {
+
         const reference =
             findProductReference(
                 item.product
@@ -568,6 +624,7 @@ async function saveDetectionEvents(counts) {
                 : 0;
 
         const record = {
+
             id:
                 `VAL-${now.getTime()}-${Math.random()
                     .toString(36)
@@ -613,6 +670,7 @@ async function saveDetectionEvents(counts) {
         };
 
         history.unshift(record);
+
         saved.push(record);
     }
 
@@ -623,10 +681,17 @@ async function saveDetectionEvents(counts) {
     return saved;
 }
 
+
+// ============================================================
+// API HISTORIQUE
+// ============================================================
+
 app.get(
     '/api/history',
     async (req, res) => {
+
         try {
+
             const history =
                 await readHistoryFile();
 
@@ -636,25 +701,32 @@ app.get(
             });
 
         } catch (error) {
+
             console.error(
                 'Erreur API historique:',
                 error.message
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Impossible de charger l\'historique.',
+
                 history: []
             });
         }
     }
 );
 
+
 app.post(
     '/api/history',
     async (req, res) => {
+
         try {
+
             const record =
                 req.body;
 
@@ -662,8 +734,11 @@ app.post(
                 !record ||
                 !record.produit
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Produit requis.'
                 });
@@ -673,6 +748,7 @@ app.post(
                 await readHistoryFile();
 
             const newRecord = {
+
                 id:
                     `VAL-${Date.now()}-${Math.random()
                         .toString(36)
@@ -752,13 +828,16 @@ app.post(
             });
 
         } catch (error) {
+
             console.error(
                 'Erreur API historique POST:',
                 error.message
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Impossible de sauvegarder dans l\'historique.'
             });
@@ -766,45 +845,67 @@ app.post(
     }
 );
 
+
+// ============================================================
+// API BASE DE DONNEES
+// ============================================================
+
 app.get(
     '/api/base-donnees',
     (req, res) => {
+
         try {
+
             const rows =
                 readBaseDonneesFromExcel(
                     BASE_DATA_PATH
                 );
 
             res.json({
+
                 success: true,
+
                 source:
                     BASE_DATA_PATH,
+
                 count:
                     rows.length,
+
                 data:
                     rows
             });
 
         } catch (error) {
+
             console.error(
                 'Erreur lecture Excel serveur:',
                 error.message
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Impossible de lire la base Excel côté serveur.',
+
                 data: []
             });
         }
     }
 );
 
+
+// ============================================================
+// TEST DETECTION
+// ============================================================
+
 app.get(
     '/api/detect-test',
     (req, res) => {
+
         try {
+
             const rows =
                 readBaseDonneesFromExcel(
                     BASE_DATA_PATH
@@ -816,11 +917,14 @@ app.get(
                     : 'PRODUIT_TEST';
 
             res.json({
+
                 success: true,
+
                 capture:
                     'test-capture.jpg',
 
                 detections: [
+
                     {
                         product:
                             testProduct,
@@ -828,17 +932,10 @@ app.get(
                         confidence:
                             0.95,
 
-                        x:
-                            null,
-
-                        y:
-                            null,
-
-                        width:
-                            null,
-
-                        height:
-                            null,
+                        x: null,
+                        y: null,
+                        width: null,
+                        height: null,
 
                         model:
                             'primary'
@@ -861,18 +958,21 @@ app.get(
             });
 
         } catch (error) {
+
             console.error(
                 'Test detection error:',
                 error.message
             );
 
             res.json({
+
                 success: true,
 
                 capture:
                     'test-capture.jpg',
 
                 detections: [
+
                     {
                         product:
                             'PRODUIT_TEST',
@@ -880,17 +980,10 @@ app.get(
                         confidence:
                             0.95,
 
-                        x:
-                            null,
-
-                        y:
-                            null,
-
-                        width:
-                            null,
-
-                        height:
-                            null,
+                        x: null,
+                        y: null,
+                        width: null,
+                        height: null,
 
                         model:
                             'primary'
@@ -915,6 +1008,222 @@ app.get(
     }
 );
 
+
+// ============================================================
+// COGNEX CAMERA
+// ============================================================
+
+app.post(
+    '/api/cognex/capture',
+    async (req, res) => {
+
+        try {
+
+            console.log(
+                '[COGNEX] Demande de capture...'
+            );
+
+            const cognexScript =
+                path.join(
+                    __dirname,
+                    'cognex_camera.py'
+                );
+
+            // Vérification du fichier Python
+            if (
+                !fsSync.existsSync(
+                    cognexScript
+                )
+            ) {
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        `cognex_camera.py introuvable : ${cognexScript}`
+                });
+            }
+
+            console.log(
+                '[COGNEX] Exécution Python...'
+            );
+
+            const result =
+                await execFileAsync(
+                    pythonCommand,
+                    [cognexScript],
+                    {
+                        timeout: 15000,
+
+                        maxBuffer:
+                            20 * 1024 * 1024,
+
+                        env:
+                            process.env
+                    }
+                );
+
+            const stdout =
+                String(
+                    result.stdout || ''
+                ).trim();
+
+            const stderr =
+                String(
+                    result.stderr || ''
+                ).trim();
+
+            if (stderr) {
+
+                console.log(
+                    '[COGNEX]',
+                    stderr
+                );
+            }
+
+            if (!stdout) {
+
+                throw new Error(
+                    'cognex_camera.py n\'a retourné aucun résultat.'
+                );
+            }
+
+            /*
+             * Le script Cognex peut écrire des logs.
+             * On recherche donc la dernière ligne JSON valide.
+             */
+
+            const lines =
+                stdout
+                    .split(/\r?\n/)
+                    .map(line => line.trim())
+                    .filter(Boolean);
+
+            let cognexResult = null;
+
+            for (
+                let i = lines.length - 1;
+                i >= 0;
+                i--
+            ) {
+
+                try {
+
+                    const parsed =
+                        JSON.parse(
+                            lines[i]
+                        );
+
+                    if (
+                        parsed &&
+                        typeof parsed === 'object'
+                    ) {
+
+                        cognexResult =
+                            parsed;
+
+                        break;
+                    }
+
+                } catch (_) {
+                    // Continuer à chercher
+                }
+            }
+
+            if (!cognexResult) {
+
+                console.error(
+                    '[COGNEX] stdout:',
+                    stdout
+                );
+
+                throw new Error(
+                    'Impossible de lire la réponse JSON de cognex_camera.py.'
+                );
+            }
+
+            if (
+                !cognexResult.success
+            ) {
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        cognexResult.error ||
+                        'Capture Cognex échouée.'
+                });
+            }
+
+            if (
+                !cognexResult.image
+            ) {
+
+                throw new Error(
+                    'La caméra Cognex a répondu mais aucune image n\'a été reçue.'
+                );
+            }
+
+            console.log(
+                `[COGNEX] ✓ Image reçue : ${cognexResult.width}x${cognexResult.height}`
+            );
+
+            return res.json({
+
+                success: true,
+
+                image:
+                    cognexResult.image,
+
+                width:
+                    cognexResult.width,
+
+                height:
+                    cognexResult.height
+            });
+
+        } catch (error) {
+
+            console.error(
+                '[COGNEX] ❌ Erreur:',
+                error.message
+            );
+
+            if (error.stdout) {
+
+                console.error(
+                    '[COGNEX] stdout:',
+                    error.stdout
+                );
+            }
+
+            if (error.stderr) {
+
+                console.error(
+                    '[COGNEX] stderr:',
+                    error.stderr
+                );
+            }
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    error.message ||
+                    'Erreur de communication avec la caméra Cognex.'
+            });
+        }
+    }
+);
+
+
+// ============================================================
+// DETECTION IA
+// ============================================================
+
 app.post(
     '/api/detect',
     async (req, res) => {
@@ -926,8 +1235,11 @@ app.post(
             !image ||
             typeof image !== 'string'
         ) {
+
             return res.status(400).json({
+
                 success: false,
+
                 message:
                     'Image manquante.'
             });
@@ -954,8 +1266,11 @@ app.post(
                 imageBuffer.length >
                 8 * 1024 * 1024
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Image invalide ou trop volumineuse.'
                 });
@@ -1000,8 +1315,11 @@ app.post(
                     scriptPath
                 )
             ) {
+
                 return res.status(500).json({
+
                     success: false,
+
                     message:
                         `inference.py introuvable : ${scriptPath}`
                 });
@@ -1012,25 +1330,27 @@ app.post(
                 const {
                     stdout,
                     stderr
-                } = await execFileAsync(
-                    pythonCommand,
-                    [
-                        scriptPath,
-                        imagePath
-                    ],
-                    {
-                        timeout:
-                            120000,
+                } =
+                    await execFileAsync(
+                        pythonCommand,
+                        [
+                            scriptPath,
+                            imagePath
+                        ],
+                        {
+                            timeout:
+                                120000,
 
-                        maxBuffer:
-                            4 * 1024 * 1024,
+                            maxBuffer:
+                                4 * 1024 * 1024,
 
-                        env:
-                            process.env
-                    }
-                );
+                            env:
+                                process.env
+                        }
+                    );
 
                 if (stderr) {
+
                     console.log(
                         '[PYTHON]',
                         stderr
@@ -1042,6 +1362,7 @@ app.post(
                         .trim();
 
                 if (!output) {
+
                     throw new Error(
                         'inference.py n\'a retourné aucun résultat JSON.'
                     );
@@ -1050,7 +1371,10 @@ app.post(
                 const lines =
                     output
                         .split(/\r?\n/)
-                        .map(line => line.trim())
+                        .map(
+                            line =>
+                                line.trim()
+                        )
                         .filter(Boolean);
 
                 let inference = null;
@@ -1060,7 +1384,9 @@ app.post(
                     i >= 0;
                     i--
                 ) {
+
                     try {
+
                         const parsed =
                             JSON.parse(
                                 lines[i]
@@ -1070,6 +1396,7 @@ app.post(
                             parsed &&
                             typeof parsed === 'object'
                         ) {
+
                             inference =
                                 parsed;
 
@@ -1077,10 +1404,12 @@ app.post(
                         }
 
                     } catch (_) {
+                        // Continuer
                     }
                 }
 
                 if (!inference) {
+
                     throw new Error(
                         'Impossible de lire le JSON retourné par inference.py.'
                     );
@@ -1092,6 +1421,7 @@ app.post(
                     );
 
                 return res.json({
+
                     success: true,
 
                     capture:
@@ -1116,6 +1446,7 @@ app.post(
                 if (
                     inferenceError.stdout
                 ) {
+
                     console.error(
                         'stdout:',
                         inferenceError.stdout
@@ -1125,6 +1456,7 @@ app.post(
                 if (
                     inferenceError.stderr
                 ) {
+
                     console.error(
                         'stderr:',
                         inferenceError.stderr
@@ -1132,6 +1464,7 @@ app.post(
                 }
 
                 return res.status(500).json({
+
                     success: false,
 
                     capture:
@@ -1160,6 +1493,7 @@ app.post(
             );
 
             return res.status(500).json({
+
                 success: false,
 
                 capture:
@@ -1182,9 +1516,15 @@ app.post(
     }
 );
 
+
+// ============================================================
+// SIGNUP
+// ============================================================
+
 app.post(
     '/api/signup',
     (req, res) => {
+
         try {
 
             const {
@@ -1202,8 +1542,11 @@ app.post(
                 !role ||
                 !password
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Tous les champs sont requis.'
                 });
@@ -1215,8 +1558,11 @@ app.post(
             if (
                 !emailPattern.test(email)
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Format d\'email invalide.'
                 });
@@ -1231,8 +1577,11 @@ app.post(
             if (
                 !validRoles.includes(role)
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Rôle invalide. Choisissez Ingénieur, Technicien ou Ouvrier.'
                 });
@@ -1241,8 +1590,11 @@ app.post(
             if (
                 password.length < 8
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Le mot de passe doit contenir au moins 8 caractères.'
                 });
@@ -1251,13 +1603,14 @@ app.post(
             const {
                 userId,
                 loginCode
-            } = createUser(
-                firstName,
-                lastName,
-                email,
-                role,
-                password
-            );
+            } =
+                createUser(
+                    firstName,
+                    lastName,
+                    email,
+                    role,
+                    password
+                );
 
             try {
 
@@ -1280,6 +1633,7 @@ app.post(
             }
 
             res.status(201).json({
+
                 success: true,
 
                 message:
@@ -1298,6 +1652,7 @@ app.post(
             );
 
             res.status(500).json({
+
                 success: false,
 
                 message:
@@ -1306,6 +1661,11 @@ app.post(
         }
     }
 );
+
+
+// ============================================================
+// LOGIN
+// ============================================================
 
 app.post(
     '/api/login',
@@ -1322,8 +1682,11 @@ app.post(
                 !loginCode ||
                 !password
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Code et mot de passe requis.'
                 });
@@ -1335,8 +1698,11 @@ app.post(
                 );
 
             if (!user) {
+
                 return res.status(401).json({
+
                     success: false,
+
                     message:
                         'Code ou mot de passe incorrect.'
                 });
@@ -1348,14 +1714,18 @@ app.post(
                     user.password_hash
                 )
             ) {
+
                 return res.status(401).json({
+
                     success: false,
+
                     message:
                         'Code ou mot de passe incorrect.'
                 });
             }
 
             res.json({
+
                 success: true,
 
                 message:
@@ -1394,6 +1764,7 @@ app.post(
             );
 
             res.status(500).json({
+
                 success: false,
 
                 message:
@@ -1402,6 +1773,11 @@ app.post(
         }
     }
 );
+
+
+// ============================================================
+// USERS
+// ============================================================
 
 app.get(
     '/api/users',
@@ -1413,6 +1789,7 @@ app.get(
                 getAllUsers();
 
             res.json({
+
                 success: true,
                 users
             });
@@ -1425,13 +1802,16 @@ app.get(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Erreur serveur.'
             });
         }
     }
 );
+
 
 app.delete(
     '/api/users/:id',
@@ -1446,8 +1826,11 @@ app.delete(
                 );
 
             if (isNaN(userId)) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'ID invalide.'
                 });
@@ -1456,7 +1839,9 @@ app.delete(
             deleteUser(userId);
 
             res.json({
+
                 success: true,
+
                 message:
                     'Utilisateur supprimé.'
             });
@@ -1469,13 +1854,16 @@ app.delete(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Erreur serveur.'
             });
         }
     }
 );
+
 
 app.put(
     '/api/users/:id/role',
@@ -1502,8 +1890,11 @@ app.put(
             if (
                 !validRoles.includes(role)
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Rôle invalide.'
                 });
@@ -1515,7 +1906,9 @@ app.put(
             );
 
             res.json({
+
                 success: true,
+
                 message:
                     'Rôle mis à jour.'
             });
@@ -1528,13 +1921,16 @@ app.put(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Erreur serveur.'
             });
         }
     }
 );
+
 
 app.get(
     '/api/users/:id',
@@ -1549,8 +1945,11 @@ app.get(
                 );
 
             if (isNaN(userId)) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'ID invalide.'
                 });
@@ -1560,14 +1959,18 @@ app.get(
                 findUserById(userId);
 
             if (!user) {
+
                 return res.status(404).json({
+
                     success: false,
+
                     message:
                         'Utilisateur introuvable.'
                 });
             }
 
             res.json({
+
                 success: true,
 
                 user: {
@@ -1603,13 +2006,16 @@ app.get(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Erreur serveur.'
             });
         }
     }
 );
+
 
 app.put(
     '/api/users/change-password',
@@ -1628,8 +2034,11 @@ app.put(
                 !currentPassword ||
                 !newPassword
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Tous les champs sont requis.'
                 });
@@ -1638,8 +2047,11 @@ app.put(
             if (
                 newPassword.length < 8
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Le nouveau mot de passe doit contenir au moins 8 caractères.'
                 });
@@ -1654,8 +2066,11 @@ app.put(
                 );
 
             if (!user) {
+
                 return res.status(404).json({
+
                     success: false,
+
                     message:
                         'Utilisateur introuvable.'
                 });
@@ -1667,8 +2082,11 @@ app.put(
                     user.password_hash
                 )
             ) {
+
                 return res.status(401).json({
+
                     success: false,
+
                     message:
                         'Mot de passe actuel incorrect.'
                 });
@@ -1692,7 +2110,9 @@ app.put(
             );
 
             res.json({
+
                 success: true,
+
                 message:
                     'Mot de passe modifié avec succès.'
             });
@@ -1705,13 +2125,16 @@ app.put(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Erreur serveur.'
             });
         }
     }
 );
+
 
 app.put(
     '/api/users/profile',
@@ -1734,8 +2157,11 @@ app.put(
                 !email ||
                 !role
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Tous les champs sont requis.'
                 });
@@ -1750,8 +2176,11 @@ app.put(
             if (
                 !validRoles.includes(role)
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Rôle invalide.'
                 });
@@ -1763,8 +2192,11 @@ app.put(
             if (
                 !emailPattern.test(email)
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         'Format d\'email invalide.'
                 });
@@ -1779,7 +2211,9 @@ app.put(
             );
 
             res.json({
+
                 success: true,
+
                 message:
                     'Profil mis à jour avec succès.'
             });
@@ -1792,13 +2226,20 @@ app.put(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Erreur serveur.'
             });
         }
     }
 );
+
+
+// ============================================================
+// ALERTE EMAIL
+// ============================================================
 
 app.post(
     '/api/alert-empty-balancelles',
@@ -1815,9 +2256,11 @@ app.post(
 
             const transporter =
                 nodemailer.createTransport({
+
                     service: 'gmail',
 
                     auth: {
+
                         user:
                             process.env.VALEO_ALERT_EMAIL,
 
@@ -1842,20 +2285,30 @@ app.post(
                     `Alerte automatique Valeo.
 
 Produit : ${produit || 'N/A'}
+
 Dernière quantité : ${quantite ?? 0}
+
 Rendement : ${rendement ?? '?'}%
+
 Heure : ${timestamp || new Date().toLocaleString('fr-FR')}
 
 Le rendement est inférieur à 90%.`,
 
                 html:
                     `<p>Alerte automatique <strong>Valeo</strong>.</p>
+
 <ul>
+
 <li><strong>Produit :</strong> ${escapeXml(produit || 'N/A')}</li>
+
 <li><strong>Dernière quantité :</strong> ${escapeXml(quantite ?? 0)}</li>
+
 <li><strong>Rendement :</strong> ${escapeXml(rendement ?? '?')}%</li>
+
 <li><strong>Heure :</strong> ${escapeXml(timestamp || new Date().toLocaleString('fr-FR'))}</li>
+
 </ul>
+
 <p>Le rendement est inférieur à 90%.</p>`
             };
 
@@ -1864,7 +2317,9 @@ Le rendement est inférieur à 90%.`,
             );
 
             res.json({
+
                 success: true,
+
                 message:
                     'Alerte email envoyée.'
             });
@@ -1877,13 +2332,20 @@ Le rendement est inférieur à 90%.`,
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     'Impossible d\'envoyer l\'alerte email.'
             });
         }
     }
 );
+
+
+// ============================================================
+// GENERATION XML
+// ============================================================
 
 app.post(
     '/api/generate-xml',
@@ -1902,8 +2364,11 @@ app.post(
                 ProductNo === null ||
                 String(ProductNo).trim() === ''
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     error:
                         'ProductNo est requis.'
                 });
@@ -1920,8 +2385,11 @@ app.post(
                 ) ||
                 quantityTotal < 0
             ) {
+
                 return res.status(400).json({
+
                     success: false,
+
                     error:
                         'Quantity est invalide.'
                 });
@@ -1939,10 +2407,10 @@ app.post(
                 }
             );
 
-            const now =
-                new Date();
+            const now = new Date();
 
             const datePart = [
+
                 now.getFullYear(),
 
                 String(
@@ -1958,9 +2426,11 @@ app.post(
                     2,
                     '0'
                 )
+
             ].join('');
 
             const timePart = [
+
                 String(
                     now.getHours()
                 ).padStart(
@@ -1981,6 +2451,7 @@ app.post(
                     2,
                     '0'
                 )
+
             ].join('');
 
             const randomPart =
@@ -2018,9 +2489,7 @@ app.post(
                     String(
                         ProductNo
                     ).trim(),
-
                     formattedDateTime,
-
                     quantityTotal
                 );
 
@@ -2035,33 +2504,14 @@ app.post(
                 filePath
             );
 
-            console.log(
-                'ProductNo :',
-                String(
-                    ProductNo
-                ).trim()
-            );
+            res.json({
 
-            console.log(
-                'EventDateTime :',
-                formattedDateTime
-            );
-
-            console.log(
-                'Quantity :',
-                quantityTotal
-            );
-
-            return res.json({
-
-                success:
-                    true,
+                success: true,
 
                 message:
                     'Fichier XML généré avec succès.',
 
-                filename:
-                    filename,
+                filename,
 
                 path:
                     filePath,
@@ -2088,14 +2538,21 @@ app.post(
                 error
             );
 
-            return res.status(500).json({
+            res.status(500).json({
+
                 success: false,
+
                 error:
                     'Impossible de générer le fichier XML.'
             });
         }
     }
 );
+
+
+// ============================================================
+// CATCH-ALL
+// ============================================================
 
 app.get(
     '*',
@@ -2110,6 +2567,11 @@ app.get(
         );
     }
 );
+
+
+// ============================================================
+// DEMARRAGE SERVEUR
+// ============================================================
 
 async function startServer() {
 
@@ -2130,10 +2592,11 @@ async function startServer() {
     } catch (error) {
 
         console.error(
-            'Erreur création dossier XML :',
+            'Erreur création dossier XML:',
             error.message
         );
     }
+
 
     try {
 
@@ -2151,6 +2614,7 @@ async function startServer() {
         );
     }
 
+
     app.listen(
         PORT,
         () => {
@@ -2158,8 +2622,17 @@ async function startServer() {
             console.log(
                 `Serveur Valeo démarré sur http://localhost:${PORT}`
             );
+
+            console.log(
+                `Python utilisé : ${pythonCommand}`
+            );
+
+            console.log(
+                `Cognex Python : ${path.join(__dirname, 'cognex_camera.py')}`
+            );
         }
     );
 }
+
 
 startServer();
