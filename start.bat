@@ -56,7 +56,6 @@ if not exist "%SERVER_DIR%" (
 echo OK - Server directory found.
 echo.
 
-
 REM ============================================================
 REM [2/8] CHECK NODE.JS
 REM ============================================================
@@ -110,9 +109,8 @@ echo.
 echo OK - Node.js and npm are available.
 echo.
 
-
 REM ============================================================
-REM [3/8] DETECT PYTHON (FORCED 3.12)
+REM [3/8] DETECT PYTHON 3.12
 REM ============================================================
 
 echo [3/8] Checking for Python 3.12...
@@ -120,9 +118,6 @@ echo.
 
 set "PYTHON_CMD="
 
-REM ------------------------------------------------------------
-REM 1. Try Python Launcher with 3.12 specifically
-REM ------------------------------------------------------------
 echo Testing Python Launcher (py -3.12)...
 py -3.12 --version >nul 2>&1
 
@@ -133,9 +128,6 @@ if not errorlevel 1 (
     goto PYTHON_FOUND
 )
 
-REM ------------------------------------------------------------
-REM 2. Try common Python 3.12 installation paths
-REM ------------------------------------------------------------
 echo Launcher not working. Searching Python 3.12 paths...
 echo.
 
@@ -151,23 +143,22 @@ if exist "%ProgramFiles%\Python312\python.exe" (
     goto PYTHON_FOUND
 )
 
-REM ------------------------------------------------------------
-REM 3. Fallback to default python command
-REM ------------------------------------------------------------
 echo Testing default python command...
+echo.
 
 python --version >nul 2>&1
 
 if not errorlevel 1 (
-    set "PYTHON_CMD=python"
-    echo WARNING - Using default Python. Please ensure it is 3.12.
-    python --version
-    goto PYTHON_FOUND
+    for /f "tokens=2" %%A in ('python --version 2^>^&1') do set "PYTHON_VERSION=%%A"
+
+    if "!PYTHON_VERSION!"=="3.12.0" goto DEFAULT_PYTHON_FOUND
+    if "!PYTHON_VERSION:~0,4!"=="3.12" goto DEFAULT_PYTHON_FOUND
+
+    echo WARNING - Python found but version is !PYTHON_VERSION!.
+    echo Python 3.12 is required.
+    echo.
 )
 
-REM ------------------------------------------------------------
-REM Python not found
-REM ------------------------------------------------------------
 color 0C
 echo ============================================================
 echo ERROR: PYTHON 3.12 NOT FOUND
@@ -178,6 +169,12 @@ echo Make sure to check "Add python.exe to PATH" during installation.
 echo.
 pause
 exit /b 1
+
+:DEFAULT_PYTHON_FOUND
+set "PYTHON_CMD=python"
+echo OK - Python 3.12 detected via default Python command.
+python --version
+goto PYTHON_FOUND
 
 :PYTHON_FOUND
 
@@ -208,7 +205,6 @@ if errorlevel 1 (
 echo.
 echo OK - Python is working.
 echo.
-
 
 REM ============================================================
 REM [4/8] CREATE / CHECK VIRTUAL ENVIRONMENT
@@ -267,7 +263,6 @@ echo.
 echo OK - Virtual environment created.
 echo.
 
-
 :VENV_READY
 
 echo Python environment:
@@ -285,7 +280,7 @@ if errorlevel 1 (
 )
 
 echo.
-
+echo.
 
 REM ============================================================
 REM [5/8] INSTALL PYTHON DEPENDENCIES
@@ -298,7 +293,6 @@ echo Upgrading pip...
 "%PYTHON_EXE%" -m pip install --upgrade pip
 
 if errorlevel 1 (
-    color 0C
     echo.
     echo WARNING: pip upgrade failed.
     echo Continuing with existing pip...
@@ -307,6 +301,7 @@ if errorlevel 1 (
 
 echo.
 echo Checking PyTorch...
+echo.
 
 "%PYTHON_EXE%" -c "import torch; print('PyTorch OK - version:', torch.__version__)" >nul 2>&1
 
@@ -331,6 +326,7 @@ if errorlevel 1 (
 
 echo.
 echo Checking torchvision...
+echo.
 
 "%PYTHON_EXE%" -c "import torchvision; print('Torchvision OK')" >nul 2>&1
 
@@ -355,6 +351,7 @@ if errorlevel 1 (
 
 echo.
 echo Checking Ultralytics...
+echo.
 
 "%PYTHON_EXE%" -c "import ultralytics; print('Ultralytics OK')" >nul 2>&1
 
@@ -379,6 +376,7 @@ if errorlevel 1 (
 
 echo.
 echo Checking Pillow...
+echo.
 
 "%PYTHON_EXE%" -c "from PIL import Image; print('Pillow OK')" >nul 2>&1
 
@@ -406,7 +404,6 @@ echo ============================================================
 echo Python AI dependencies ready.
 echo ============================================================
 echo.
-
 
 REM ============================================================
 REM [6/8] CHECK PROJECT FILES
@@ -470,7 +467,6 @@ echo OK - resnet50_classification_best.pth
 echo.
 echo All required project files found.
 echo.
-
 
 REM ============================================================
 REM [7/8] TEST AI MODELS
@@ -542,7 +538,6 @@ echo ============================================================
 echo AI MODELS READY
 echo ============================================================
 echo.
-
 
 REM ============================================================
 REM [8/8] NODE.JS DEPENDENCIES + START SERVER
@@ -620,17 +615,39 @@ echo.
 echo Roboflow dependency: DISABLED
 echo Local AI models: ENABLED
 echo.
+echo URL: http://localhost:3000
+echo.
 echo ============================================================
 echo.
 
-REM ------------------------------------------------------------
-REM Tell server.js to use the project virtual environment
-REM ------------------------------------------------------------
+REM ============================================================
+REM SET PYTHON USED BY SERVER
+REM ============================================================
 
 set "VALEO_PYTHON=%PYTHON_EXE%"
 
 echo VALEO_PYTHON:
 echo %VALEO_PYTHON%
+echo.
+
+REM ============================================================
+REM OPEN GOOGLE CHROME AUTOMATICALLY
+REM ============================================================
+
+echo Waiting for server startup...
+echo.
+
+start "" "http://localhost:3000"
+
+echo Google Chrome opening:
+echo http://localhost:3000
+echo.
+
+REM ============================================================
+REM START NODE SERVER
+REM ============================================================
+
+echo Starting Node.js server...
 echo.
 
 node server.js

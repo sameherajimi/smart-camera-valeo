@@ -4,9 +4,10 @@ const path = require('path');
 const fs = require('fs/promises');
 const fsSync = require('fs');
 const XLSX = require('xlsx');
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process'); // Ajout de spawn
 const { promisify } = require('util');
 const nodemailer = require('nodemailer');
+const readline = require('readline'); // Ajout de readline pour lire le flux
 
 const {
     getDatabase,
@@ -24,9 +25,10 @@ const {
 
 const execFileAsync = promisify(execFile);
 
+// Chemin mis à jour vers votre environnement virtuel
 const pythonCommand =
     process.env.VALEO_PYTHON ||
-    (process.platform === 'win32' ? 'python' : 'python3');
+    'C:\\Users\\hajina\\Downloads\\smart-camera-valeo-master\\.venv\\Scripts\\python.exe';
 
 const app = express();
 const PORT = 3000;
@@ -1004,186 +1006,76 @@ app.get(
     }
 );
 
+// ==========================================
+// NOUVEAU CODE STREAM OPTIMISE 
+// ==========================================
 let cognexLatestFrame = null;
-let cognexCaptureRunning = false;
 let cognexCaptureLoopStarted = false;
 let cognexLastCaptureError = null;
-
-async function executeCognexCapture() {
-    if (cognexCaptureRunning) {
-        return cognexLatestFrame;
-    }
-
-    cognexCaptureRunning = true;
-
-    try {
-        const cognexScript =
-            path.join(
-                __dirname,
-                'cognex_camera.py'
-            );
-
-        if (!fsSync.existsSync(cognexScript)) {
-            throw new Error(
-                `cognex_camera.py introuvable : ${cognexScript}`
-            );
-        }
-
-        const result =
-            await execFileAsync(
-                pythonCommand,
-                [cognexScript],
-                {
-                    cwd: __dirname,
-                    timeout: 15000,
-                    maxBuffer:
-                        50 * 1024 * 1024,
-                    windowsHide: true,
-                    env: process.env
-                }
-            );
-
-        const stdout =
-            String(
-                result.stdout || ''
-            ).trim();
-
-        const stderr =
-            String(
-                result.stderr || ''
-            ).trim();
-
-        if (stderr) {
-            console.log(
-                '[COGNEX]',
-                stderr
-            );
-        }
-
-        if (!stdout) {
-            throw new Error(
-                "cognex_camera.py n'a retourné aucun résultat."
-            );
-        }
-
-        const lines =
-            stdout
-                .split(/\r?\n/)
-                .map(line => line.trim())
-                .filter(Boolean);
-
-        let cognexResult = null;
-
-        for (
-            let i = lines.length - 1;
-            i >= 0;
-            i--
-        ) {
-            try {
-                const parsed =
-                    JSON.parse(
-                        lines[i]
-                    );
-
-                if (
-                    parsed &&
-                    typeof parsed === 'object'
-                ) {
-                    cognexResult = parsed;
-                    break;
-                }
-            } catch (_) {}
-        }
-
-        if (!cognexResult) {
-            throw new Error(
-                'Impossible de lire la réponse JSON de cognex_camera.py.'
-            );
-        }
-
-        if (
-            cognexResult.success !== true
-        ) {
-            throw new Error(
-                cognexResult.error ||
-                'Capture Cognex échouée.'
-            );
-        }
-
-        if (
-            !cognexResult.image ||
-            typeof cognexResult.image !== 'string'
-        ) {
-            throw new Error(
-                "La caméra Cognex a répondu mais aucune image n'a été reçue."
-            );
-        }
-
-        cognexLatestFrame = {
-            success: true,
-            image:
-                cognexResult.image,
-            width:
-                Number(
-                    cognexResult.width
-                ) || 640,
-            height:
-                Number(
-                    cognexResult.height
-                ) || 480,
-            timestamp:
-                Date.now()
-        };
-
-        cognexLastCaptureError = null;
-
-        return cognexLatestFrame;
-    } catch (error) {
-        cognexLastCaptureError =
-            error;
-
-        console.error(
-            '[COGNEX] Erreur :',
-            error.message
-        );
-
-        if (error.stdout) {
-            console.error(
-                '[COGNEX] STDOUT:',
-                error.stdout
-            );
-        }
-
-        if (error.stderr) {
-            console.error(
-                '[COGNEX] STDERR:',
-                error.stderr
-            );
-        }
-
-        return cognexLatestFrame;
-    } finally {
-        cognexCaptureRunning = false;
-    }
-}
+let cognexProcess = null;
 
 function startCognexCaptureLoop() {
-    if (cognexCaptureLoopStarted) {
-        return;
-    }
-
+    if (cognexCaptureLoopStarted) return;
     cognexCaptureLoopStarted = true;
 
-    executeCognexCapture()
-        .catch(() => {});
+    const cognexScript = path.join(__dirname, 'cognex_camera.py');
 
-    setInterval(() => {
-        if (!cognexCaptureRunning) {
-            executeCognexCapture()
-                .catch(() => {});
+    // Launch Python script in the optimized 'stream' mode
+    cognexProcess = spawn(pythonCommand, ['-u', cognexScript, 'stream'], {
+        cwd: __dirname,
+        env: process.env
+    });
+
+    // Use readline to parse JSON line-by-line safely
+    const rl = readline.createInterface({
+        input: cognexProcess.stdout,
+        terminal: false
+    });
+
+    rl.on('line', (line) => {
+        try {
+            const parsed = JSON.parse(line);
+            if (parsed.success) {
+                cognexLatestFrame = {
+                    success: true,
+                    image: parsed.image,
+                    width: parsed.width || 640,
+                    height: parsed.height || 480,
+                    timestamp: Date.now()
+                };
+                cognexLastCaptureError = null;
+            } else if (parsed.error) {
+                cognexLastCaptureError = new Error(parsed.error);
+            }
+        } catch (err) {
+            // Ignore partial or non-JSON console prints
         }
-    }, 150);
+    });
+
+    cognexProcess.stderr.on('data', (data) => {
+        console.log(`[COGNEX STREAM] ${data.toString().trim()}`);
+    });
+
+    cognexProcess.on('close', (code) => {
+        console.log(`[COGNEX] Stream stopped (code ${code}). Restarting in 5s...`);
+        cognexCaptureLoopStarted = false;
+        cognexProcess = null;
+        setTimeout(startCognexCaptureLoop, 5000);
+    });
 }
+
+async function executeCognexCapture() {
+    startCognexCaptureLoop();
+
+    // Wait up to 5 seconds for the first frame to arrive in the background
+    for (let i = 0; i < 50; i++) {
+        if (cognexLatestFrame) return cognexLatestFrame;
+        if (cognexLastCaptureError) throw cognexLastCaptureError;
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error("Timeout waiting for camera stream initialization.");
+}
+// ==========================================
 
 app.post(
     '/api/cognex/capture',
@@ -2421,3 +2313,4 @@ async function startServer() {
 }
 
 startServer();
+
