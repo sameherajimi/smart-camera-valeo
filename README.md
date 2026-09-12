@@ -58,50 +58,49 @@ You can start the application using either the **Automated Script** (Recommended
 
 ### Option B: Manual Setup via Terminal Commands
 
-If you prefer to execute commands manually step-by-step:
+If you prefer manual setup, the project root contains both the web UI and the `server` folder.
 
-#### 1️⃣ Open Terminal & Navigate to Server Directory
-Make sure you are inside the `server` directory where `server.js` and `package.json` are located:
+1) Open terminal and change to the `server` directory:
+
 ```bash
-cd PROJET-STAGE--main/server
+cd C:\Users\Lenovo\Desktop\smart-camera-valeo\server
 ```
-*(If you are already inside `PROJET-STAGE--main`, simply run `cd server`)*
 
-#### 2️⃣ Install Node.js Dependencies
+2) Install Node.js dependencies:
+
 ```bash
 npm install
 ```
 
-#### 3️⃣ Set Up Python Virtual Environment & Roboflow SDK
+3) Create a Python virtual environment and install Python requirements (from project root):
 
-- **Windows (Command Prompt / PowerShell):**
-  ```cmd
-  python -m venv ..\.venv
-  ..\.venv\Scripts\python.exe -m pip install --upgrade pip
-  ..\.venv\Scripts\pip install -U inference-sdk
-  ```
+Windows (PowerShell / Command Prompt):
 
-- **Windows (Git Bash):**
-  ```bash
-  python -m venv ../.venv
-  ../.venv/Scripts/pip install -U inference-sdk
-  ```
+```powershell
+python -m venv ..\.venv
+..\.venv\Scripts\python.exe -m pip install --upgrade pip
+..\.venv\Scripts\python.exe -m pip install -r ..\requirements.txt
+```
 
-- **Linux / macOS:**
-  ```bash
-  python3 -m venv ../.venv
-  source ../.venv/bin/activate
-  pip install --upgrade pip
-  pip install -U inference-sdk
-  ```
+Linux / macOS:
 
-#### 4️⃣ Launch the Application Server
-Run from the `server` directory:
+```bash
+python3 -m venv ../.venv
+source ../.venv/bin/activate
+pip install --upgrade pip
+pip install -r ../requirements.txt
+```
+
+Important: `torch` (PyTorch) installation depends on your platform and CUDA version. If you need GPU support, follow the official installation instructions at https://pytorch.org/get-started/locally and install the appropriate `torch`/`torchvision` wheel before running `pip install -r requirements.txt`.
+
+4) Launch the application server from the `server` directory:
+
 ```bash
 node server.js
 ```
 
-You should see an output indicating the server is active:
+You should see an output indicating the server is active (example):
+
 ```text
 ======================================================
               STARTING VALEO SERVER
