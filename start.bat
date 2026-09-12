@@ -18,8 +18,8 @@ echo  Mode    : Local AI - No Roboflow dependency
 echo.
 echo  Creators:
 echo     - Iyed Tababi
-echo     - [Creator 2]
-echo     - [Creator 3]
+echo     - Samaher Ajimi
+echo     - Hichem Ajina
 echo.
 echo ======================================================
 echo.

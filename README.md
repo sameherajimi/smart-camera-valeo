@@ -124,15 +124,15 @@ Once the server is running, open your browser and go to:
 
 ### Step 2: Login Options
 
-#### 👑 Option 1: Use Default Administrator Credentials
-The system comes pre-configured with a default **Administrator** account:
+#### 👑 Option 1: Administrator Access (secure setup)
+For security, there is no hard-coded administrator password in the repository. Configure admin credentials using environment variables or create an account via the signup page.
 
-* **Login Code / Code de connexion:** `ADMIN-001`
-* **Password / Mot de passe:** `admin123`
+Recommended (development only): copy `.env.example` to `.env` and set `ADMIN_LOGIN` and `ADMIN_PASSWORD`.
 
-1. Type `ADMIN-001` in the **Code de connexion** field.
-2. Type `admin123` in the **Mot de passe** field.
-3. Click **Se connecter**.
+1. Create `.env` from `.env.example` and set a secure `ADMIN_PASSWORD`.
+2. Start the server (see Installation) and use the configured credentials to sign in.
+
+If any credentials were previously committed to this repository, rotate them immediately and avoid using those values in production.
 
 ---
 

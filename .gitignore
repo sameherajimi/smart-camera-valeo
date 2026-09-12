@@ -54,26 +54,66 @@ server/captures/
 dist/
 build/
 
-# Misc
-.cache/
-.pytest_cache/
-=======
-# Node dependencies
+>>>>>>> 21390d0cf65a5cdd1377db67e45c981f0c74de52
+# Combined .gitignore for the project
+
+# Node
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
 
-# Python virtual environment
+# Python
 .venv/
 venv/
 ENV/
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.pyc
 
-# Temporary & local files
-.tmp/
+# SQLite / bases locales
+*.sqlite3
+*.db
+
+# Environnements et secrets
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+
+# Models and large binaries
+server/*.pt
+server/*.pth
+
+# Server data and user files
+server/comptes_valeo.xlsx
+server/history.json
+
+# Captures / médias
+captures/
+server/captures/
+
+# IDE / OS
 .vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
 *.log
 
-# Server uploads/captures
-server/captures/
->>>>>>> 21390d0cf65a5cdd1377db67e45c981f0c74de52
+# Static build outputs
+dist/
+build/
+
+# Misc
+.cache/
+.pytest_cache/

@@ -47,10 +47,12 @@ echo "======================================================"
 echo -e "${NC}"
 
 
-# ================= ROBOfLOW KEY =================
-
-export VALEO_ROBOFLOW_API_KEY="dQudu2taTYXhZN8DmqZo"
-export VALEO_ROBOFLOW_SECOND_API_KEY="KeCJQZgmePtugUhbMNTC"
+# Roboflow API keys should not be hard-coded here.
+# Read them from environment variables or a .env file (added to .gitignore).
+if [ -z "${VALEO_ROBOFLOW_API_KEY}" ] || [ -z "${VALEO_ROBOFLOW_SECOND_API_KEY}" ]; then
+    echo "WARNING: Roboflow API keys not set in environment."
+    echo "Set VALEO_ROBOFLOW_API_KEY and VALEO_ROBOFLOW_SECOND_API_KEY before running this script."
+fi
 
 
 # =================================================
@@ -232,7 +234,7 @@ echo -e "${NC}"
 echo -e "${WHITE}"
 echo " URL       : http://localhost:3000"
 echo " Account   : ADMIN-001"
-echo " Password  : admin123"
+echo " Password  : (configured via environment variable or setup)"
 echo ""
 echo " Roboflow AI : Connected"
 echo ""
