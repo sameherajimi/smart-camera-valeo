@@ -1,141 +1,73 @@
-# Ignore user/workbook files
+# ============================================================
+# VALEO INTELLIGENT CAMERA - GITIGNORE
+# ============================================================
+
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+
+# Node.js dependencies & logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# Python virtual environment & cache
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+.pytest_cache/
+.cache/
+
+# Heavy AI Models & Weights
+server/*.pt
+server/*.pth
+
+# Database & runtime exports
+*.sqlite3
+*.db
+server/comptes_valeo.xlsx
+server/history.json
+server/xml/
+
+# Temporary files & inspection scratch scripts
+.tmp/
+.tmp_*
+scratch/
+
+# Captures & Media Output
+captures/
+server/captures/
+
+# Workbooks & Excel exports
 *.xls
 *.xlsx
 *.xlsm
 *.xlsb
 
-# Environment and local editor files
-.env
-.env.*
-.vscode/
-
-# Node modules
-node_modules/
-
-# Runtime / history data
-server/history.json
-
-# Server XML production exports (keep out of repo)
-server/xml/
-
-# Project-stage artifacts
-PROJET-STAGE--main/server/
-<<<<<<< HEAD
-# .gitignore généré — ignore les fichiers/repères sensibles ou volumineux
-
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-pnpm-lock.yaml
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.pyc
-env/
-venv/
-.venv/
-ENV/
-build/
+# Build & Dist
 dist/
-*.egg-info/
-
-# SQLite / bases locales
-*.sqlite3
-*.db
-
-# Environnements et secrets
-.env
-.env.local
-.env.*.local
-secrets/
-*.pem
-*.key
-
-# IDE / OS
-.vscode/
-.idea/
-*.iml
-.DS_Store
-Thumbs.db
+build/
 
 # Logs
 logs/
 *.log
 
-# Captures / médias (si vous ne voulez pas suivre les images/vidéos)
-captures/
-server/captures/
-
-# Static build outputs
-dist/
-build/
-
->>>>>>> 21390d0cf65a5cdd1377db67e45c981f0c74de52
-# Combined .gitignore for the project
-
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-pnpm-lock.yaml
-
-# Python
-.venv/
-venv/
-ENV/
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.pyc
-
-# SQLite / bases locales
-*.sqlite3
-*.db
-
-# Environnements et secrets
-.env
-.env.local
-.env.*.local
-secrets/
-*.pem
-*.key
-
-# Models and large binaries
-server/*.pt
-server/*.pth
-
-# Server data and user files
-server/comptes_valeo.xlsx
-server/history.json
-
-# Captures / médias
-captures/
-server/captures/
-
-# IDE / OS
+# IDE & OS specific files
 .vscode/
 .idea/
 *.iml
 .DS_Store
 Thumbs.db
-
-# Logs
-logs/
-*.log
-
-# Static build outputs
-dist/
-build/
-
-# Misc
-.cache/
-.pytest_cache/

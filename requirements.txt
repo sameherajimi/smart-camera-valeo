@@ -1,10 +1,20 @@
-# Python dependencies for inference and image processing
-# Note: install `torch` according to your CUDA/CPU configuration (see README)
+# ============================================================
+# VALEO INTELLIGENT CAMERA - PYTHON DEPENDENCIES
+# ============================================================
+
+# Core AI & Computer Vision Frameworks
+# Note: Install `torch` according to your GPU/CUDA configuration if hardware acceleration is available (see README.md)
 torch>=2.0.0
 torchvision>=0.15.0
 ultralytics>=8.0.0
+opencv-python>=4.8.0
 Pillow>=10.0.0
+numpy>=1.24.0
 
-# Roboflow / Inference SDK (optional for remote model hosting)
+# Data Processing & Excel Export Utilities
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Remote Inference SDK (Optional / Roboflow Cloud Integration)
 inference-sdk>=0.22.0
-roboflow==1.2.2
+roboflow>=1.2.2
