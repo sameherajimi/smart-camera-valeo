@@ -110,30 +110,45 @@ echo OK - Node.js and npm are available.
 echo.
 
 REM ============================================================
-REM [3/8] DETECT PYTHON 3.12
+REM [3/8] DETECT PYTHON
 REM ============================================================
 
-echo [3/8] Checking for Python 3.12...
+echo [3/8] Checking for Python environment...
 echo.
 
 set "PYTHON_CMD="
 
-echo Testing Python Launcher (py -3.12)...
-py -3.12 --version >nul 2>&1
-
-if not errorlevel 1 (
-    set "PYTHON_CMD=py -3.12"
-    echo OK - Python 3.12 detected via Launcher.
-    py -3.12 --version
-    goto PYTHON_FOUND
+REM Check Python launcher for common stable versions first (3.11, 3.12, 3.10, 3.13)
+for %%V in (3.11 3.12 3.10 3.13) do (
+    if "!PYTHON_CMD!"=="" (
+        py -%%V --version >nul 2>&1
+        if not errorlevel 1 (
+            set "PYTHON_CMD=py -%%V"
+            echo OK - Python %%V detected via Launcher.
+            py -%%V --version
+            goto PYTHON_FOUND
+        )
+    )
 )
 
-echo Launcher not working. Searching Python 3.12 paths...
+echo Searching Python installation paths...
 echo.
+
+if exist "%LocalAppData%\Programs\Python\Python311\python.exe" (
+    set "PYTHON_CMD=%LocalAppData%\Programs\Python\Python311\python.exe"
+    echo OK - Found Python 3.11 in LocalAppData.
+    goto PYTHON_FOUND
+)
 
 if exist "%LocalAppData%\Programs\Python\Python312\python.exe" (
     set "PYTHON_CMD=%LocalAppData%\Programs\Python\Python312\python.exe"
     echo OK - Found Python 3.12 in LocalAppData.
+    goto PYTHON_FOUND
+)
+
+if exist "%ProgramFiles%\Python311\python.exe" (
+    set "PYTHON_CMD=%ProgramFiles%\Python311\python.exe"
+    echo OK - Found Python 3.11 in ProgramFiles.
     goto PYTHON_FOUND
 )
 
@@ -150,45 +165,32 @@ python --version >nul 2>&1
 
 if not errorlevel 1 (
     for /f "tokens=2" %%A in ('python --version 2^>^&1') do set "PYTHON_VERSION=%%A"
-
-    if "!PYTHON_VERSION!"=="3.12.0" goto DEFAULT_PYTHON_FOUND
-    if "!PYTHON_VERSION:~0,4!"=="3.12" goto DEFAULT_PYTHON_FOUND
-
-    echo WARNING - Python found but version is !PYTHON_VERSION!.
-    echo Python 3.12 is required.
-    echo.
+    set "PYTHON_CMD=python"
+    echo OK - Python !PYTHON_VERSION! detected via default Python command.
+    goto PYTHON_FOUND
 )
 
 color 0C
 echo ============================================================
-echo ERROR: PYTHON 3.12 NOT FOUND
+echo ERROR: PYTHON NOT FOUND
 echo ============================================================
 echo.
-echo Please install Python 3.12.x from python.org
+echo Please install Python 3.11 or 3.12 from python.org
 echo Make sure to check "Add python.exe to PATH" during installation.
 echo.
 pause
 exit /b 1
 
-:DEFAULT_PYTHON_FOUND
-set "PYTHON_CMD=python"
-echo OK - Python 3.12 detected via default Python command.
-python --version
-goto PYTHON_FOUND
-
 :PYTHON_FOUND
 
 echo.
-echo Python command:
-echo %PYTHON_CMD%
+echo Python command selected: %PYTHON_CMD%
 echo.
 
-if "%PYTHON_CMD%"=="py -3.12" (
-    py -3.12 --version
-) else if "%PYTHON_CMD%"=="python" (
+if "%PYTHON_CMD%"=="python" (
     python --version
 ) else (
-    "%PYTHON_CMD%" --version
+    %PYTHON_CMD% --version
 )
 
 if errorlevel 1 (
