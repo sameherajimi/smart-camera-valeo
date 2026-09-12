@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Historique - Valeo</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -87,7 +86,6 @@
             background: var(--card);
             border-bottom: 1px solid var(--border);
             padding: 0.875rem 2rem;
-
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -130,11 +128,9 @@
             font-weight: 500;
             padding: 0.5rem 1rem;
             border-radius: 7px;
-
             display: flex;
             align-items: center;
             gap: 0.4rem;
-
             transition: 0.2s;
             white-space: nowrap;
         }
@@ -176,16 +172,12 @@
             position: absolute;
             top: calc(100% + 8px);
             right: 0;
-
             width: 220px;
             padding: 0.5rem;
-
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 12px;
-
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-
             display: none;
             z-index: 200;
         }
@@ -220,14 +212,11 @@
             display: flex;
             align-items: center;
             gap: 0.6rem;
-
             padding: 0.6rem 0.75rem;
             border-radius: 8px;
-
             color: var(--text);
             text-decoration: none;
             font-size: 0.85rem;
-
             cursor: pointer;
         }
 
@@ -243,17 +232,13 @@
         .main-content {
             position: relative;
             z-index: 1;
-
             width: 100%;
             max-width: 1700px;
-
             margin: 0 auto;
             padding: 1.5rem 2rem;
-
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-
             flex: 1;
         }
 
@@ -295,12 +280,10 @@
         .panel-header {
             min-height: 58px;
             padding: 0.85rem 1.25rem;
-
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 0.75rem;
-
             border-bottom: 1px solid var(--border);
         }
 
@@ -308,7 +291,6 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-
             font-size: 0.95rem;
             font-weight: 600;
         }
@@ -320,8 +302,6 @@
         .panel-body {
             padding: 1rem 1.25rem;
         }
-
-        /* FILTRES */
 
         .filters-panel {
             width: 100%;
@@ -339,7 +319,6 @@
                 minmax(130px, 0.9fr)
                 minmax(150px, 1fr)
                 auto;
-
             gap: 0.75rem;
             align-items: end;
         }
@@ -352,9 +331,7 @@
             display: flex;
             align-items: center;
             gap: 0.35rem;
-
             margin-bottom: 0.35rem;
-
             color: var(--muted);
             font-size: 0.68rem;
             font-weight: 600;
@@ -370,17 +347,13 @@
         .filter-select {
             width: 100%;
             height: 38px;
-
             padding: 0.45rem 0.7rem;
-
             background: var(--input);
             border: 1px solid var(--border);
             border-radius: 8px;
-
             color: var(--text);
             font-family: 'Inter', sans-serif;
             font-size: 0.8rem;
-
             outline: none;
         }
 
@@ -415,17 +388,13 @@
         .reset-btn {
             height: 38px;
             padding: 0 0.85rem;
-
             border-radius: 8px;
             border: 1px solid rgba(255,68,68,0.25);
-
             background: rgba(255,68,68,0.08);
             color: var(--red);
-
             font-family: 'Inter', sans-serif;
             font-size: 0.78rem;
             font-weight: 600;
-
             cursor: pointer;
             white-space: nowrap;
         }
@@ -433,8 +402,6 @@
         .reset-btn:hover {
             background: rgba(255,68,68,0.16);
         }
-
-        /* KPI */
 
         .kpi-grid {
             display: grid;
@@ -446,7 +413,6 @@
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 14px;
-
             padding: 1rem 1.25rem;
         }
 
@@ -471,14 +437,39 @@
             font-size: 0.68rem;
         }
 
-        /* GRAPHIQUE */
-
         .chart-panel {
             max-width: 100%;
         }
 
+        .chart-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-select {
+            width: auto;
+            min-width: 190px;
+            height: 34px;
+        }
+
+        .chart-product-select {
+            width: auto;
+            min-width: 210px;
+            height: 34px;
+            display: none;
+        }
+
+        .chart-quantity-mode {
+            width: auto;
+            min-width: 170px;
+            height: 34px;
+            display: none;
+        }
+
         .chart-container {
-            height: 260px;
+            height: 300px;
             position: relative;
         }
 
@@ -487,7 +478,11 @@
             height: 100% !important;
         }
 
-        /* TABLE */
+        .chart-description {
+            margin-top: 0.7rem;
+            color: var(--muted);
+            font-size: 0.72rem;
+        }
 
         .table-panel {
             min-height: 480px;
@@ -519,29 +514,22 @@
 
         th {
             padding: 0.75rem 1rem;
-
             background: var(--background);
             border-bottom: 2px solid var(--border);
-
             color: var(--muted);
             font-size: 0.66rem;
             font-weight: 600;
-
             text-align: left;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-
             white-space: nowrap;
         }
 
         td {
             padding: 0.75rem 1rem;
-
             border-bottom: 1px solid rgba(255,255,255,0.04);
-
             color: var(--text);
             font-size: 0.82rem;
-
             vertical-align: middle;
         }
 
@@ -552,18 +540,12 @@
         .product-badge {
             display: inline-flex;
             align-items: center;
-
             max-width: 210px;
-
             padding: 0.25rem 0.55rem;
-
             border-radius: 6px;
-
             background: rgba(185,255,0,0.10);
             border: 1px solid rgba(185,255,0,0.20);
-
             color: var(--valeo-lime);
-
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -572,16 +554,11 @@
         .family-badge {
             display: inline-flex;
             align-items: center;
-
             padding: 0.25rem 0.55rem;
-
             border-radius: 6px;
-
             background: rgba(31,64,78,0.35);
             border: 1px solid rgba(31,64,78,0.5);
-
             color: #d5dde0;
-
             white-space: nowrap;
         }
 
@@ -599,7 +576,6 @@
         .progress {
             width: 65px;
             height: 5px;
-
             background: var(--input);
             border-radius: 999px;
             overflow: hidden;
@@ -629,28 +605,22 @@
             align-items: center;
             justify-content: center;
             gap: 1rem;
-
             padding: 0.9rem 1rem;
-
             border-top: 1px solid var(--border);
         }
 
         .page-btn {
             height: 34px;
             padding: 0 0.75rem;
-
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-
             background: var(--input);
             border: 1px solid var(--border);
             border-radius: 7px;
-
             color: var(--text);
             font-family: 'Inter', sans-serif;
             font-size: 0.75rem;
-
             cursor: pointer;
         }
 
@@ -673,17 +643,13 @@
         .export-btn {
             height: 34px;
             padding: 0 0.8rem;
-
             border: 1px solid rgba(0,204,102,0.25);
             border-radius: 7px;
-
             background: rgba(0,204,102,0.08);
             color: var(--green);
-
             font-family: 'Inter', sans-serif;
             font-size: 0.75rem;
             font-weight: 600;
-
             cursor: pointer;
         }
 
@@ -694,16 +660,11 @@
         .count-badge {
             display: inline-flex;
             align-items: center;
-
             padding: 0.25rem 0.55rem;
-
             border-radius: 6px;
-
             background: rgba(185,255,0,0.10);
             border: 1px solid rgba(185,255,0,0.20);
-
             color: var(--valeo-lime);
-
             font-size: 0.7rem;
             font-weight: 600;
         }
@@ -711,16 +672,12 @@
         .app-footer {
             position: relative;
             z-index: 1;
-
             background: var(--card);
             border-top: 1px solid var(--border);
-
             padding: 0.7rem 2rem;
-
             display: flex;
             justify-content: space-between;
             align-items: center;
-
             color: var(--muted);
             font-size: 0.7rem;
         }
@@ -778,6 +735,16 @@
 
             .header-actions {
                 margin-left: 0;
+            }
+
+            .chart-controls {
+                width: 100%;
+            }
+
+            .chart-select,
+            .chart-product-select,
+            .chart-quantity-mode {
+                width: 100%;
             }
 
             .app-footer {
@@ -838,9 +805,11 @@
         </span>
 
         <span id="userDisplay" style="font-size:0.8rem;"></span>
-        <!-- Camera live indicator (shared across all pages) -->
-        <span id="global-cam-indicator" style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.8rem;padding-left:1rem;">
-            <i class="fa-solid fa-circle" style="color:#ff4444;font-size:8px;"></i>
+
+        <span id="global-cam-indicator"
+              style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.8rem;padding-left:1rem;">
+            <i class="fa-solid fa-circle"
+               style="color:#ff4444;font-size:8px;"></i>
             <span id="globalCamText">Caméra OFF</span>
         </span>
 
@@ -874,11 +843,8 @@
             </div>
 
         </div>
-
     </div>
-
 </header>
-
 
 <main class="main-content">
 
@@ -907,19 +873,17 @@
             </button>
 
         </div>
-
     </div>
-
-
-    <!-- FILTRES -->
 
     <section class="panel filters-panel">
 
         <div class="panel-header">
+
             <div class="panel-title">
                 <i class="fa-solid fa-filter"></i>
                 Filtres
             </div>
+
         </div>
 
         <div class="filters-body">
@@ -942,7 +906,6 @@
 
                 </div>
 
-
                 <div class="filter-group">
 
                     <label class="filter-label">
@@ -952,15 +915,13 @@
 
                     <select
                         id="filter-product"
-                        class="filter-select"
-                    >
+                        class="filter-select">
                         <option value="">
                             Tous les produits
                         </option>
                     </select>
 
                 </div>
-
 
                 <div class="filter-group">
 
@@ -971,16 +932,16 @@
 
                     <select
                         id="filter-period"
-                        class="filter-select"
-                    >
+                        class="filter-select">
+
                         <option value="all">Toutes</option>
                         <option value="today">Aujourd'hui</option>
                         <option value="week">7 jours</option>
                         <option value="month">Ce mois</option>
+
                     </select>
 
                 </div>
-
 
                 <div class="filter-group">
 
@@ -997,27 +958,22 @@
 
                 </div>
 
-
                 <div class="filter-group reset-wrapper">
 
                     <button
                         class="reset-btn"
-                        onclick="resetFilters()"
-                    >
+                        onclick="resetFilters()">
+
                         <i class="fa-solid fa-rotate-left"></i>
                         Réinitialiser
+
                     </button>
 
                 </div>
 
             </div>
-
         </div>
-
     </section>
-
-
-    <!-- KPI -->
 
     <section class="kpi-grid">
 
@@ -1037,7 +993,6 @@
 
         </div>
 
-
         <div class="kpi-card">
 
             <div class="kpi-label">
@@ -1054,7 +1009,6 @@
 
         </div>
 
-
         <div class="kpi-card">
 
             <div class="kpi-label">
@@ -1070,7 +1024,6 @@
             </div>
 
         </div>
-
 
         <div class="kpi-card">
 
@@ -1090,16 +1043,75 @@
 
     </section>
 
-
-    <!-- GRAPHIQUE -->
-
     <section class="panel chart-panel">
 
         <div class="panel-header">
 
             <div class="panel-title">
+
                 <i class="fa-solid fa-chart-column"></i>
-                Quantité par produit
+
+                <span id="chart-title">
+                    Quantité par produit
+                </span>
+
+            </div>
+
+            <div class="chart-controls">
+
+                <select
+                    id="chart-mode"
+                    class="filter-select chart-select">
+
+                    <option value="all-products">
+                        Tous les produits
+                    </option>
+
+                    <option value="product-time">
+                        Produit au cours du temps
+                    </option>
+
+                </select>
+
+                <select
+                    id="chart-product"
+                    class="filter-select chart-product-select">
+
+                    <option value="">
+                        Sélectionner un produit
+                    </option>
+
+                </select>
+
+                <select
+                    id="chart-metric"
+                    class="filter-select chart-product-select">
+
+                    <option value="quantity">
+                        Quantité au cours du temps
+                    </option>
+
+                    <option value="rendement">
+                        Rendement au cours du temps
+                    </option>
+
+                </select>
+
+                <!-- NOUVEAU : MODE QUANTITE -->
+                <select
+                    id="chart-quantity-mode"
+                    class="filter-select chart-quantity-mode">
+
+                    <option value="cumulative">
+                        Quantité cumulative
+                    </option>
+
+                    <option value="non-cumulative">
+                        Quantité non cumulative
+                    </option>
+
+                </select>
+
             </div>
 
         </div>
@@ -1110,12 +1122,14 @@
                 <canvas id="histChart"></canvas>
             </div>
 
+            <div class="chart-description"
+                 id="chart-description">
+                Quantité totale enregistrée pour chaque produit.
+            </div>
+
         </div>
 
     </section>
-
-
-    <!-- TABLE -->
 
     <section class="panel table-panel">
 
@@ -1130,8 +1144,8 @@
 
                 <select
                     id="sort-by"
-                    class="filter-select sort-select"
-                >
+                    class="filter-select sort-select">
+
                     <option value="date-desc">
                         Date ↓
                     </option>
@@ -1155,9 +1169,7 @@
                 </select>
 
             </div>
-
         </div>
-
 
         <div class="table-wrapper">
 
@@ -1180,10 +1192,15 @@
                 <tbody id="hist-table-body">
 
                     <tr>
+
                         <td colspan="7" class="empty-state">
+
                             <i class="fa-solid fa-database"></i>
+
                             Aucune mesure enregistrée
+
                         </td>
+
                     </tr>
 
                 </tbody>
@@ -1192,32 +1209,34 @@
 
         </div>
 
-
         <div class="pagination">
 
             <button
                 class="page-btn"
                 id="btn-prev"
-                onclick="changePage(-1)"
-            >
+                onclick="changePage(-1)">
+
                 <i class="fa-solid fa-chevron-left"></i>
                 Préc.
+
             </button>
 
             <span
                 class="page-info"
-                id="page-info"
-            >
+                id="page-info">
+
                 Page 1 / 1
+
             </span>
 
             <button
                 class="page-btn"
                 id="btn-next"
-                onclick="changePage(1)"
-            >
+                onclick="changePage(1)">
+
                 Suiv.
                 <i class="fa-solid fa-chevron-right"></i>
+
             </button>
 
         </div>
@@ -1226,7 +1245,6 @@
 
 </main>
 
-
 <footer class="app-footer">
 
     <span>
@@ -1234,12 +1252,11 @@
     </span>
 
     <span>
-        Version 1.0.0 |
+        Version 1.0.4 |
         <a href="#">Support</a>
     </span>
 
 </footer>
-
 
 <script>
 
@@ -1256,8 +1273,8 @@ const PRODUCT_FAMILIES = {
     ],
 
     "BEL": [
-        "FRAME",
-        "MATE"
+        "BEL_FRAME",
+        "BEL_MATE"
     ],
 
     "CMFB-P": [
@@ -1302,20 +1319,20 @@ const PRODUCT_FAMILIES = {
     "HMI": [
         "HMI"
     ]
-
 };
-
 
 const PAGE_SIZE = 25;
 
 let allData = [];
 let displayData = [];
-
 let currentPage = 1;
 let histChart = null;
+let loaded = false;
 
 
-/* HORLOGE */
+/* ==========================================
+   HORLOGE
+========================================== */
 
 function updateClock() {
 
@@ -1326,13 +1343,14 @@ function updateClock() {
 
     document.getElementById('current-time').textContent =
         now.toLocaleTimeString('fr-FR');
-
 }
 
 setInterval(updateClock, 1000);
 
 
-/* UTILISATEUR */
+/* ==========================================
+   INFORMATIONS UTILISATEUR
+========================================== */
 
 function loadUserInfo() {
 
@@ -1340,6 +1358,7 @@ function loadUserInfo() {
         sessionStorage.getItem('valeo_isAdmin') === 'true';
 
     if (isAdmin) {
+
         document.getElementById('navAdmin').style.display =
             'inline-flex';
     }
@@ -1371,11 +1390,12 @@ function loadUserInfo() {
 
     document.getElementById('dropdownEmail').textContent =
         userEmail || '—';
-
 }
 
 
-/* MENU COMPTE */
+/* ==========================================
+   MENU COMPTE
+========================================== */
 
 function setupAccountMenu() {
 
@@ -1404,11 +1424,12 @@ function setupAccountMenu() {
         event.stopPropagation();
 
     });
-
 }
 
 
-/* LOGOUT */
+/* ==========================================
+   DECONNEXION
+========================================== */
 
 function logout() {
 
@@ -1419,11 +1440,12 @@ function logout() {
     sessionStorage.removeItem('valeo_isAdmin');
 
     window.location.href = 'loading.html';
-
 }
 
 
-/* FILTRE PRODUIT */
+/* ==========================================
+   PRODUITS
+========================================== */
 
 function populateProductDropdown() {
 
@@ -1457,29 +1479,119 @@ function populateProductDropdown() {
 
         }
     );
-
 }
 
 
-/* NOM FAMILLE */
+function populateChartProductDropdown(data = allData) {
+
+    const select =
+        document.getElementById('chart-product');
+
+    const currentValue =
+        select.value;
+
+    const products =
+        [...new Set(
+            data
+                .map(record => record.produit)
+                .filter(Boolean)
+        )].sort((a, b) =>
+            a.localeCompare(b)
+        );
+
+    select.innerHTML =
+        '<option value="">Sélectionner un produit</option>';
+
+    products.forEach(product => {
+
+        const option =
+            document.createElement('option');
+
+        option.value = product;
+        option.textContent = product;
+
+        select.appendChild(option);
+
+    });
+
+    if (products.includes(currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+
+/* ==========================================
+   NORMALISATION
+========================================== */
+
+function normalizeProduct(product) {
+
+    return String(product ?? '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toUpperCase();
+}
+
 
 function getFamily(product) {
 
-    for (const [family, products]
-        of Object.entries(PRODUCT_FAMILIES)) {
+    const normalizedProduct =
+        normalizeProduct(product);
 
-        if (products.includes(product)) {
+    if (!normalizedProduct) {
+        return '';
+    }
+
+    for (
+        const [family, products]
+        of Object.entries(PRODUCT_FAMILIES)
+    ) {
+
+        const found =
+            products.some(
+                item =>
+                    normalizeProduct(item) ===
+                    normalizedProduct
+            );
+
+        if (found) {
             return family;
         }
-
     }
 
     return '';
-
 }
 
 
-/* NORMALISATION DES DONNEES */
+function normalizeFamily(family) {
+
+    const normalized =
+        String(family ?? '')
+            .trim()
+            .replace(/\s+/g, ' ')
+            .toUpperCase();
+
+    if (!normalized) {
+        return '';
+    }
+
+    for (const familyName of Object.keys(PRODUCT_FAMILIES)) {
+
+        if (
+            normalizeProduct(familyName) ===
+            normalized
+        ) {
+            return familyName;
+        }
+    }
+
+    return String(family).trim();
+}
+
+
+/* ==========================================
+   NORMALISATION DES DONNEES
+========================================== */
 
 function normalizeRecord(record) {
 
@@ -1487,7 +1599,7 @@ function normalizeRecord(record) {
         return null;
     }
 
-    const product =
+    const productRaw =
         record.produit ??
         record.product ??
         record.productName ??
@@ -1495,21 +1607,32 @@ function normalizeRecord(record) {
         record.nom_produit ??
         '';
 
+    const product =
+        String(productRaw).trim();
+
     if (!product) {
         return null;
     }
 
-    const family =
+    const detectedFamily =
+        getFamily(product);
+
+    const backendFamily =
         record.famille ??
         record.family ??
         record.familyName ??
         record.nomFamille ??
         record.nom_famille ??
-        getFamily(product);
+        '';
+
+    const family =
+        detectedFamily ||
+        normalizeFamily(backendFamily) ||
+        'Non classé';
 
     const dateRaw =
-        record.date ??
         record.timestamp ??
+        record.date ??
         record.datetime ??
         record.dateHeure ??
         record.date_heure ??
@@ -1535,28 +1658,80 @@ function normalizeRecord(record) {
         if (parsed) {
             date = combined;
         }
-
     }
 
-    const quantity =
-        Number(
-            record.quantite ??
-            record.quantity ??
-            record.nombreProduits ??
-            record.nombre_produits ??
-            record.count ??
-            0
-        ) || 0;
+    /*
+     * ==========================================
+     * QUANTITE CUMULATIVE
+     * ==========================================
+     */
+    let cumulativeQuantity =
+        record.quantite_cumulative ??
+        record.quantite_totale ??
+        record.quantiteTotale ??
+        record.quantite_total ??
+        record.quantiteTotal ??
+        record.total_kits ??
+        record.totalKits ??
+        record.totalKitsDetected ??
+        record.total_kits_detected ??
+        record.quantiteTotaleKits ??
+        record.quantite_totale_kits ??
+        0;
 
-    const totalLoading =
-        Number(
+    /*
+     * ==========================================
+     * QUANTITE NON CUMULATIVE
+     * ==========================================
+     */
+    let nonCumulativeQuantity =
+        record.quantite_non_cumulative ??
+        record.quantite_detection ??
+        record.quantiteDetection ??
+        record.detection_kits ??
+        0;
+
+    /*
+     * Compatibilité avec ancien history.json
+     */
+    if (
+        Number(nonCumulativeQuantity) === 0 &&
+        record.jigs_detectees !== undefined &&
+        record.kits_par_jig !== undefined
+    ) {
+
+        nonCumulativeQuantity =
+            Number(record.jigs_detectees || 0) *
+            Number(record.kits_par_jig || 0);
+    }
+
+    cumulativeQuantity =
+        parseNumericValue(cumulativeQuantity);
+
+    nonCumulativeQuantity =
+        parseNumericValue(nonCumulativeQuantity);
+
+    /*
+     * Ancien format :
+     * quantite peut être la seule valeur disponible.
+     */
+    if (
+        cumulativeQuantity === 0 &&
+        record.quantite !== undefined
+    ) {
+
+        cumulativeQuantity =
+            parseNumericValue(
+                record.quantite
+            );
+    }
+
+    const chargementTotal =
+        parseNumericValue(
             record.chargement_total ??
             record.chargementTotal ??
-            record.quantite_totale ??
-            record.total ??
-            record.loading ??
-            0
-        ) || 0;
+            cumulativeQuantity
+        );
 
     let rendement =
         record.rendement ??
@@ -1565,89 +1740,170 @@ function normalizeRecord(record) {
         record.rate ??
         0;
 
-    if (typeof rendement === 'string') {
-        rendement =
-            parseFloat(
-                rendement.replace('%', '').replace(',', '.')
-            ) || 0;
-    }
-
-    rendement = Number(rendement) || 0;
+    rendement =
+        parseNumericValue(rendement);
 
     return {
+
         id:
             record.id ??
             record.scanId ??
             record.scan_id ??
             '',
 
-        date: date,
+        date:
+            date,
 
-        produit: product,
+        produit:
+            product,
 
         famille:
-            family || getFamily(product) || '—',
+            family,
 
-        rendement: rendement,
+        rendement:
+            rendement,
 
-        chargementTotal: totalLoading,
+        /*
+         * Valeur cumulée
+         */
+        quantiteCumulative:
+            cumulativeQuantity,
 
-        nombreProduits: quantity
+        /*
+         * Valeur de la détection actuelle
+         */
+        quantiteNonCumulative:
+            nonCumulativeQuantity,
+
+        /*
+         * Tableau
+         */
+        chargementTotal:
+            chargementTotal,
+
+        /*
+         * Compatibilité ancienne logique
+         */
+        nombreProduits:
+            cumulativeQuantity
     };
-
 }
 
 
-/* CHARGEMENT DES DONNEES REELLES */
+function parseNumericValue(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ''
+    ) {
+        return 0;
+    }
+
+    if (typeof value === 'number') {
+        return Number.isFinite(value)
+            ? value
+            : 0;
+    }
+
+    const cleaned =
+        String(value)
+            .replace(',', '.')
+            .match(/-?\d+(?:\.\d+)?/);
+
+    return cleaned
+        ? Number(cleaned[0])
+        : 0;
+}
+
+
+/* ==========================================
+   CHARGEMENT HISTORIQUE
+========================================== */
 
 async function loadHistory() {
-    /*
-     * Source unique : le serveur.
-     *
-     * Le serveur écrit une ligne uniquement après une détection
-     * positive d'au moins un produit. Ainsi, historique.html
-     * affiche exactement les événements enregistrés par le système.
-     */
+
     try {
-        const response = await fetch('/api/history', {
-            method: 'GET',
-            cache: 'no-store'
-        });
+
+        const response =
+            await fetch(
+                '/api/history?mode=cumulative',
+                {
+                    method: 'GET',
+                    cache: 'no-store'
+                }
+            );
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
         }
 
-        const data = await response.json();
-        const records = Array.isArray(data)
-            ? data
-            : (Array.isArray(data.history)
-                ? data.history
-                : (Array.isArray(data.data) ? data.data : []));
+        const data =
+            await response.json();
 
-        allData = records
-            .map(normalizeRecord)
-            .filter(Boolean);
+        const records =
+            Array.isArray(data)
+                ? data
+                : (
+                    Array.isArray(data.history)
+                        ? data.history
+                        : (
+                            Array.isArray(data.data)
+                                ? data.data
+                                : []
+                        )
+                );
+
+        console.log(
+            'Historique reçu depuis le serveur :',
+            records
+        );
+
+        allData =
+            records
+                .map(normalizeRecord)
+                .filter(Boolean);
 
         allData.sort((a, b) => {
-            const da = parseDate(a.date)?.getTime() || 0;
-            const db = parseDate(b.date)?.getTime() || 0;
+
+            const da =
+                parseDate(a.date)?.getTime() || 0;
+
+            const db =
+                parseDate(b.date)?.getTime() || 0;
+
             return db - da;
         });
 
+        populateChartProductDropdown(allData);
+
         loaded = true;
+
         applyFilters();
 
     } catch (error) {
-        console.error('Impossible de charger l\'historique serveur:', error);
+
+        console.error(
+            "Impossible de charger l'historique serveur:",
+            error
+        );
+
         allData = [];
         loaded = false;
+
+        populateChartProductDropdown([]);
+
         applyFilters();
     }
 }
 
 
-/* DATE */
+/* ==========================================
+   DATE
+========================================== */
 
 function parseDate(value) {
 
@@ -1677,15 +1933,15 @@ function parseDate(value) {
             Number(match[5] || 0),
             Number(match[6] || 0)
         );
-
     }
 
     return null;
-
 }
 
 
-/* FILTRES */
+/* ==========================================
+   FILTRES
+========================================== */
 
 function applyFilters() {
 
@@ -1711,54 +1967,68 @@ function applyFilters() {
             'filter-date'
         ).value;
 
-
     let filtered =
         allData.filter(record => {
 
-            if (product &&
-                record.produit !== product) {
-
+            if (
+                product &&
+                normalizeProduct(record.produit) !==
+                normalizeProduct(product)
+            ) {
                 return false;
             }
-
 
             if (search) {
 
                 const text =
                     `${record.id}
-                     ${record.produit}
-                     ${record.famille}
-                     ${record.date}
-                     ${record.rendement}
-                     ${record.chargementTotal}
-                     ${record.nombreProduits}`
+                    ${record.produit}
+                    ${record.famille}
+                    ${record.date}
+                    ${record.rendement}
+                    ${record.chargementTotal}
+                    ${record.quantiteCumulative}
+                    ${record.quantiteNonCumulative}`
                     .toLowerCase();
 
                 if (!text.includes(search)) {
                     return false;
                 }
-
             }
-
 
             const recordDate =
                 parseDate(record.date);
 
+            if (
+                selectedDate &&
+                recordDate
+            ) {
 
-            if (selectedDate && recordDate) {
+                const year =
+                    recordDate.getFullYear();
+
+                const month =
+                    String(
+                        recordDate.getMonth() + 1
+                    ).padStart(2, '0');
+
+                const day =
+                    String(
+                        recordDate.getDate()
+                    ).padStart(2, '0');
 
                 const dateOnly =
-                    recordDate.toISOString()
-                    .slice(0, 10);
+                    `${year}-${month}-${day}`;
 
                 if (dateOnly !== selectedDate) {
                     return false;
                 }
-
             }
 
-
-            if (period !== 'all' && recordDate) {
+            if (
+                period !== 'all' &&
+                recordDate
+            ) {
 
                 const now =
                     new Date();
@@ -1769,9 +2039,11 @@ function applyFilters() {
                 if (period === 'today') {
 
                     start.setHours(
-                        0, 0, 0, 0
+                        0,
+                        0,
+                        0,
+                        0
                     );
-
                 }
 
                 if (period === 'week') {
@@ -1779,7 +2051,6 @@ function applyFilters() {
                     start.setDate(
                         now.getDate() - 7
                     );
-
                 }
 
                 if (period === 'month') {
@@ -1790,19 +2061,15 @@ function applyFilters() {
                             now.getMonth(),
                             1
                         );
-
                 }
 
                 if (recordDate < start) {
                     return false;
                 }
-
             }
 
             return true;
-
         });
-
 
     sortData(filtered);
 
@@ -1812,13 +2079,18 @@ function applyFilters() {
     currentPage = 1;
 
     updateSummary(filtered);
-    updateChart(filtered);
-    renderPage();
 
+    populateChartProductDropdown(filtered);
+
+    updateChart(filtered);
+
+    renderPage();
 }
 
 
-/* TRI */
+/* ==========================================
+   TRI TABLE
+========================================== */
 
 function sortData(data) {
 
@@ -1834,21 +2106,22 @@ function sortData(data) {
             return a.produit.localeCompare(
                 b.produit
             );
-
         }
 
         if (sort === 'qty-desc') {
 
-            return b.nombreProduits -
-                   a.nombreProduits;
-
+            return (
+                b.quantiteCumulative -
+                a.quantiteCumulative
+            );
         }
 
         if (sort === 'qty-asc') {
 
-            return a.nombreProduits -
-                   b.nombreProduits;
-
+            return (
+                a.quantiteCumulative -
+                b.quantiteCumulative
+            );
         }
 
         const dateA =
@@ -1862,13 +2135,13 @@ function sortData(data) {
         }
 
         return dateB - dateA;
-
     });
-
 }
 
 
-/* RESUME */
+/* ==========================================
+   KPI
+========================================== */
 
 function updateSummary(data) {
 
@@ -1877,11 +2150,11 @@ function updateSummary(data) {
     ).textContent =
         data.length.toLocaleString('fr-FR');
 
-
     const totalProducts =
         data.reduce(
             (sum, item) =>
-                sum + item.nombreProduits,
+                sum +
+                item.quantiteCumulative,
             0
         );
 
@@ -1890,11 +2163,11 @@ function updateSummary(data) {
     ).textContent =
         totalProducts.toLocaleString('fr-FR');
 
-
     const totalLoading =
         data.reduce(
             (sum, item) =>
-                sum + item.chargementTotal,
+                sum +
+                item.chargementTotal,
             0
         );
 
@@ -1902,7 +2175,6 @@ function updateSummary(data) {
         'hist-total-loading'
     ).textContent =
         totalLoading.toLocaleString('fr-FR');
-
 
     const distinctProducts =
         new Set(
@@ -1914,23 +2186,19 @@ function updateSummary(data) {
     ).textContent =
         distinctProducts;
 
-
     document.getElementById(
         'total-count-badge'
     ).textContent =
         `${data.length} enregistrement${data.length !== 1 ? 's' : ''}`;
-
 }
 
 
-/* GRAPHIQUE */
+/* ==========================================
+   COULEURS GRAPHIQUE
+========================================== */
 
 const CHART_COLORS = [
-    'rgba(185,255,0,0.75)',
-    'rgba(0,204,102,0.75)',
-    'rgba(219,185,92,0.75)',
-    'rgba(0,153,255,0.75)',
-    'rgba(255,68,68,0.75)',
+
     'rgba(185,255,0,0.75)',
     'rgba(0,204,102,0.75)',
     'rgba(219,185,92,0.75)',
@@ -1948,6 +2216,7 @@ const CHART_COLORS = [
     'rgba(255,68,68,0.75)'
 ];
 
+
 function getBarColor(product) {
 
     let hash = 0;
@@ -1957,99 +2226,457 @@ function getBarColor(product) {
         i < product.length;
         i++
     ) {
+
         hash =
             product.charCodeAt(i) +
-                ((hash << 5) - hash);
+            ((hash << 5) - hash);
     }
 
     const index =
-        Math.abs(
-            hash
-        ) % CHART_COLORS.length;
+        Math.abs(hash) %
+        CHART_COLORS.length;
 
     return CHART_COLORS[index];
-
 }
+
+
+/* ==========================================
+   GRAPHIQUE
+========================================== */
 
 function updateChart(data) {
 
-    const quantities = {};
+    const mode =
+        document.getElementById(
+            'chart-mode'
+        ).value;
 
-    data.forEach(record => {
+    const productSelect =
+        document.getElementById(
+            'chart-product'
+        );
 
-        if (!quantities[record.produit]) {
-            quantities[record.produit] = 0;
-        }
+    const metricSelect =
+        document.getElementById(
+            'chart-metric'
+        );
 
-        quantities[record.produit] +=
-            record.nombreProduits;
+    const quantityModeSelect =
+        document.getElementById(
+            'chart-quantity-mode'
+        );
 
-    });
+    const chartTitle =
+        document.getElementById(
+            'chart-title'
+        );
+
+    const chartDescription =
+        document.getElementById(
+            'chart-description'
+        );
+
+    const product =
+        productSelect.value;
+
+    const metric =
+        metricSelect.value;
+
+    const quantityMode =
+        quantityModeSelect.value;
 
 
-    const sorted =
-        Object.entries(quantities)
-            .sort((a, b) => b[1] - a[1]);
+    /* ==========================================
+       MODE 1 : TOUS LES PRODUITS
+    ========================================== */
+
+    if (mode === 'all-products') {
+
+        productSelect.style.display = 'none';
+        metricSelect.style.display = 'none';
+        quantityModeSelect.style.display = 'none';
+
+        chartTitle.textContent =
+            'Quantité par produit';
+
+        chartDescription.textContent =
+            'Quantité totale enregistrée pour chaque produit.';
+
+        const quantities = {};
+
+        data.forEach(record => {
+
+            if (!quantities[record.produit]) {
+                quantities[record.produit] = 0;
+            }
+
+            /*
+             * Pour "Tous les produits",
+             * on utilise la valeur cumulative finale
+             * de chaque produit et non la somme des
+             * valeurs cumulatives de chaque ligne.
+             */
+            const current =
+                Number(
+                    record.quantiteCumulative
+                ) || 0;
+
+            quantities[record.produit] =
+                Math.max(
+                    quantities[record.produit],
+                    current
+                );
+        });
+
+        const sorted =
+            Object.entries(quantities)
+                .sort(
+                    (a, b) =>
+                        b[1] - a[1]
+                );
+
+        const labels =
+            sorted.map(item => item[0]);
+
+        const values =
+            sorted.map(item => item[1]);
+
+        const backgroundColors =
+            labels.map(getBarColor);
+
+        const borderColors =
+            labels.map(
+                label =>
+                    getBarColor(label).replace(
+                        '0.75)',
+                        '1)'
+                    )
+            );
+
+        createOrUpdateChart({
+
+            type: 'bar',
+
+            labels: labels,
+
+            data: values,
+
+            backgroundColor:
+                backgroundColors,
+
+            borderColor:
+                borderColors,
+
+            borderWidth: 1,
+
+            borderRadius: 5,
+
+            label:
+                'Quantité cumulative'
+
+        });
+
+        return;
+    }
+
+
+    /* ==========================================
+       MODE 2 : UN PRODUIT AU COURS DU TEMPS
+    ========================================== */
+
+    productSelect.style.display = 'block';
+    metricSelect.style.display = 'block';
+
+    /*
+     * Le choix cumulatif / non cumulatif
+     * est affiché uniquement pour la quantité.
+     */
+    quantityModeSelect.style.display =
+        metric === 'quantity'
+            ? 'block'
+            : 'none';
+
+    if (!product) {
+
+        chartTitle.textContent =
+            'Produit au cours du temps';
+
+        chartDescription.textContent =
+            'Sélectionnez un produit pour afficher son évolution.';
+
+        createOrUpdateChart({
+
+            type: 'line',
+
+            labels: [],
+
+            data: [],
+
+            backgroundColor:
+                'rgba(185,255,0,0.15)',
+
+            borderColor:
+                '#B9FF00',
+
+            borderWidth: 2,
+
+            pointRadius: 4,
+
+            pointHoverRadius: 6,
+
+            fill: true,
+
+            tension: 0.25,
+
+            label:
+                'Sélectionnez un produit'
+
+        });
+
+        return;
+    }
+
+
+    const productData =
+        data
+            .filter(
+                record =>
+                    normalizeProduct(record.produit) ===
+                    normalizeProduct(product)
+            )
+            .map(record => ({
+                record,
+                date:
+                    parseDate(record.date)
+            }))
+            .filter(item => item.date)
+            .sort(
+                (a, b) =>
+                    a.date.getTime() -
+                    b.date.getTime()
+            );
 
 
     const labels =
-        sorted.map(item => item[0]);
-
-    const values =
-        sorted.map(item => item[1]);
-
-    const backgroundColors =
-        labels.map(
-            getBarColor
-        );
-
-    const borderColors =
-        labels.map(
-            label =>
-                getBarColor(
-                    label
-                ).replace(
-                    '0.75)',
-                    '1)'
+        productData.map(
+            item =>
+                item.date.toLocaleString(
+                    'fr-FR',
+                    {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }
                 )
         );
 
 
+    let values;
+
+
+    /* ==========================================
+       RENDEMENT
+    ========================================== */
+
+    if (metric === 'rendement') {
+
+        values =
+            productData.map(
+                item =>
+                    Number(
+                        item.record.rendement
+                    ) || 0
+            );
+
+        chartTitle.textContent =
+            `Rendement — ${product}`;
+
+        chartDescription.textContent =
+            `Évolution du rendement du produit ${product} au cours du temps.`;
+
+    }
+
+
+    /* ==========================================
+       QUANTITE
+    ========================================== */
+
+    else {
+
+        if (
+            quantityMode ===
+            'non-cumulative'
+        ) {
+
+            /*
+             * Exemple :
+             *
+             * Détection 1 :
+             * 2 × 11 = 22
+             *
+             * Détection 2 :
+             * 3 × 11 = 33
+             *
+             * Détection 3 :
+             * 1 × 11 = 11
+             *
+             * Résultat :
+             * 22 → 33 → 11
+             */
+            values =
+                productData.map(
+                    item =>
+                        Number(
+                            item.record
+                                .quantiteNonCumulative
+                        ) || 0
+                );
+
+            chartTitle.textContent =
+                `Quantité non cumulative — ${product}`;
+
+            chartDescription.textContent =
+                `Quantité obtenue à chaque détection du produit ${product}.`;
+
+        } else {
+
+            /*
+             * Exemple :
+             *
+             * 22
+             * 22 + 33 = 55
+             * 55 + 11 = 66
+             *
+             * Résultat :
+             * 22 → 55 → 66
+             */
+            values =
+                productData.map(
+                    item =>
+                        Number(
+                            item.record
+                                .quantiteCumulative
+                        ) || 0
+                );
+
+            chartTitle.textContent =
+                `Quantité cumulative — ${product}`;
+
+            chartDescription.textContent =
+                `Évolution de la quantité cumulative du produit ${product} au cours du temps.`;
+        }
+    }
+
+
+    createOrUpdateChart({
+
+        type: 'line',
+
+        labels: labels,
+
+        data: values,
+
+        backgroundColor:
+            metric === 'rendement'
+                ? 'rgba(0,204,102,0.12)'
+                : 'rgba(185,255,0,0.12)',
+
+        borderColor:
+            metric === 'rendement'
+                ? '#00cc66'
+                : '#B9FF00',
+
+        borderWidth: 2,
+
+        pointRadius: 4,
+
+        pointHoverRadius: 6,
+
+        fill: true,
+
+        tension: 0.25,
+
+        label:
+            metric === 'rendement'
+                ? 'Rendement (%)'
+                : (
+                    quantityMode === 'non-cumulative'
+                        ? 'Quantité non cumulative'
+                        : 'Quantité cumulative'
+                )
+
+    });
+}
+
+
+/* ==========================================
+   CREATION / MISE A JOUR CHART
+========================================== */
+
+function createOrUpdateChart(config) {
+
+    const canvas =
+        document.getElementById('histChart');
+
+    const context =
+        canvas.getContext('2d');
+
     if (!histChart) {
-
-        const context =
-            document.getElementById(
-                'histChart'
-            ).getContext('2d');
-
 
         histChart =
             new Chart(
                 context,
                 {
-                    type: 'bar',
+
+                    type:
+                        config.type,
 
                     data: {
-                        labels: labels,
+
+                        labels:
+                            config.labels,
 
                         datasets: [
-                            {
-                                label:
-                                    'Nombre de produits',
 
-                                data: values,
+                            {
+
+                                label:
+                                    config.label,
+
+                                data:
+                                    config.data,
 
                                 backgroundColor:
-                                    backgroundColors,
+                                    config.backgroundColor,
 
                                 borderColor:
-                                    borderColors,
+                                    config.borderColor,
 
-                                borderWidth: 1,
+                                borderWidth:
+                                    config.borderWidth,
 
-                                borderRadius: 5
+                                borderRadius:
+                                    config.type === 'bar'
+                                        ? 5
+                                        : 0,
+
+                                pointRadius:
+                                    config.pointRadius || 0,
+
+                                pointHoverRadius:
+                                    config.pointHoverRadius || 0,
+
+                                fill:
+                                    config.fill || false,
+
+                                tension:
+                                    config.tension || 0
+
                             }
+
                         ]
+
                     },
 
                     options: {
@@ -2059,14 +2686,19 @@ function updateChart(data) {
                         maintainAspectRatio: false,
 
                         interaction: {
+
                             mode: 'index',
+
                             intersect: false
+
                         },
 
                         plugins: {
 
                             legend: {
+
                                 display: false
+
                             },
 
                             tooltip: {
@@ -2093,33 +2725,59 @@ function updateChart(data) {
                                         function(items) {
 
                                             return items[0]
-                                                .label;
-
+                                                ?.label || '';
                                         },
 
                                     label:
                                         function(context) {
 
-                                            const product =
-                                                context.label;
+                                            const mode =
+                                                document.getElementById(
+                                                    'chart-mode'
+                                                ).value;
 
-                                            const quantity =
-                                                context.raw;
+                                            const metric =
+                                                document.getElementById(
+                                                    'chart-metric'
+                                                ).value;
 
-                                            const family =
-                                                getFamily(product);
+                                            const quantityMode =
+                                                document.getElementById(
+                                                    'chart-quantity-mode'
+                                                ).value;
 
-                                            return [
-                                                `Produits : ${quantity}`,
-                                                `Famille : ${family || '—'}`
-                                            ];
+                                            if (
+                                                mode ===
+                                                'product-time' &&
+                                                metric ===
+                                                'rendement'
+                                            ) {
 
+                                                return ` Rendement : ${context.raw}%`;
+                                            }
+
+                                            if (
+                                                mode ===
+                                                'product-time' &&
+                                                metric ===
+                                                'quantity'
+                                            ) {
+
+                                                if (
+                                                    quantityMode ===
+                                                    'non-cumulative'
+                                                ) {
+
+                                                    return ` Quantité : ${context.raw}`;
+                                                }
+
+                                                return ` Quantité cumulative : ${context.raw}`;
+                                            }
+
+                                            return ` Quantité : ${context.raw}`;
                                         }
-
                                 }
-
                             }
-
                         },
 
                         scales: {
@@ -2127,22 +2785,25 @@ function updateChart(data) {
                             x: {
 
                                 grid: {
+
                                     color:
                                         'rgba(255,255,255,0.04)'
                                 },
 
                                 ticks: {
+
                                     color:
                                         '#8C9498',
 
                                     font: {
+
                                         size: 10
                                     },
 
                                     maxRotation: 45,
+
                                     minRotation: 0
                                 }
-
                             },
 
                             y: {
@@ -2150,46 +2811,96 @@ function updateChart(data) {
                                 beginAtZero: true,
 
                                 grid: {
+
                                     color:
                                         'rgba(255,255,255,0.04)'
                                 },
 
                                 ticks: {
+
                                     color:
-                                        '#8C9498'
+                                        '#8C9498',
+
+                                    callback:
+                                        function(value) {
+
+                                            const mode =
+                                                document.getElementById(
+                                                    'chart-mode'
+                                                ).value;
+
+                                            const metric =
+                                                document.getElementById(
+                                                    'chart-metric'
+                                                ).value;
+
+                                            if (
+                                                mode ===
+                                                'product-time' &&
+                                                metric ===
+                                                'rendement'
+                                            ) {
+
+                                                return value + '%';
+                                            }
+
+                                            return value;
+                                        }
                                 }
-
                             }
-
                         }
-
                     }
-
                 }
             );
 
     } else {
 
+        histChart.config.type =
+            config.type;
+
         histChart.data.labels =
-            labels;
+            config.labels;
+
+        histChart.data.datasets[0].label =
+            config.label;
 
         histChart.data.datasets[0].data =
-            values;
+            config.data;
 
         histChart.data.datasets[0].backgroundColor =
-            backgroundColors;
+            config.backgroundColor;
 
         histChart.data.datasets[0].borderColor =
-            borderColors;
+            config.borderColor;
+
+        histChart.data.datasets[0].borderWidth =
+            config.borderWidth;
+
+        histChart.data.datasets[0].borderRadius =
+            config.type === 'bar'
+                ? 5
+                : 0;
+
+        histChart.data.datasets[0].pointRadius =
+            config.pointRadius || 0;
+
+        histChart.data.datasets[0].pointHoverRadius =
+            config.pointHoverRadius || 0;
+
+        histChart.data.datasets[0].fill =
+            config.fill || false;
+
+        histChart.data.datasets[0].tension =
+            config.tension || 0;
 
         histChart.update();
-
     }
-
 }
 
 
-/* TABLEAU */
+/* ==========================================
+   TABLEAU
+========================================== */
 
 function renderPage() {
 
@@ -2198,10 +2909,8 @@ function renderPage() {
             'hist-table-body'
         );
 
-
     const total =
         displayData.length;
-
 
     const totalPages =
         Math.max(
@@ -2211,15 +2920,13 @@ function renderPage() {
             )
         );
 
-
     if (currentPage > totalPages) {
         currentPage = totalPages;
     }
 
-
     const start =
-        (currentPage - 1) * PAGE_SIZE;
-
+        (currentPage - 1) *
+        PAGE_SIZE;
 
     const rows =
         displayData.slice(
@@ -2227,15 +2934,16 @@ function renderPage() {
             start + PAGE_SIZE
         );
 
-
     tbody.innerHTML = '';
-
 
     if (rows.length === 0) {
 
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="empty-state">
+                <td
+                    colspan="7"
+                    class="empty-state"
+                >
                     <i class="fa-solid fa-database"></i>
                     Aucune mesure enregistrée
                 </td>
@@ -2249,24 +2957,19 @@ function renderPage() {
             const number =
                 start + index + 1;
 
-
             const rendement =
-                Math.max(
-                    0,
-                    Math.min(
-                        100,
-                        Number(record.rendement) || 0
-                    )
-                );
-
+                Number(record.rendement) || 0;
 
             const date =
                 formatDate(record.date);
 
+            const family =
+                getFamily(record.produit) ||
+                record.famille ||
+                'Non classé';
 
             const tr =
                 document.createElement('tr');
-
 
             tr.innerHTML = `
 
@@ -2289,7 +2992,7 @@ function renderPage() {
 
                 <td>
                     <span class="family-badge">
-                        ${escapeHTML(record.famille)}
+                        ${escapeHTML(family)}
                     </span>
                 </td>
 
@@ -2298,14 +3001,24 @@ function renderPage() {
                     <div class="rendement">
 
                         <div class="progress">
+
                             <div
                                 class="progress-fill"
-                                style="width:${rendement}%"
+                                style="width:${Math.min(
+                                    100,
+                                    Math.max(
+                                        0,
+                                        rendement
+                                    )
+                                )}%"
                             ></div>
+
                         </div>
 
                         <strong>
-                            ${formatNumber(record.rendement)}%
+                            ${formatNumber(
+                                record.rendement
+                            )}%
                         </strong>
 
                     </div>
@@ -2314,58 +3027,54 @@ function renderPage() {
 
                 <td>
                     <strong>
-                        ${formatNumber(record.chargementTotal)}
+                        ${formatNumber(
+                            record.chargementTotal
+                        )}
                     </strong>
                 </td>
 
                 <td>
                     <strong class="value-positive">
-                        ${formatNumber(record.nombreProduits)}
+                        ${formatNumber(
+                            record.quantiteCumulative
+                        )}
                     </strong>
                 </td>
 
             `;
 
-
             tbody.appendChild(tr);
-
         });
-
     }
-
 
     document.getElementById(
         'page-info'
     ).textContent =
         `Page ${currentPage} / ${totalPages} (${total} ligne${total !== 1 ? 's' : ''})`;
 
-
     document.getElementById(
         'btn-prev'
     ).disabled =
         currentPage <= 1;
 
-
     document.getElementById(
         'btn-next'
     ).disabled =
         currentPage >= totalPages;
-
 }
 
-
-/* PAGINATION */
 
 function changePage(delta) {
 
     currentPage += delta;
 
     renderPage();
-
 }
 
 
-/* DATE AFFICHAGE */
+/* ==========================================
+   FORMATAGE
+========================================== */
 
 function formatDate(value) {
 
@@ -2387,11 +3096,8 @@ function formatDate(value) {
             timeStyle: 'medium'
         }
     );
-
 }
 
-
-/* NOMBRE */
 
 function formatNumber(value) {
 
@@ -2405,11 +3111,8 @@ function formatNumber(value) {
     return number.toLocaleString(
         'fr-FR'
     );
-
 }
 
-
-/* SECURITE HTML */
 
 function escapeHTML(value) {
 
@@ -2419,11 +3122,12 @@ function escapeHTML(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-
 }
 
 
-/* RESET */
+/* ==========================================
+   RESET
+========================================== */
 
 function resetFilters() {
 
@@ -2448,11 +3152,12 @@ function resetFilters() {
     ).value = 'date-desc';
 
     applyFilters();
-
 }
 
 
-/* EXPORT CSV */
+/* ==========================================
+   EXPORT CSV
+========================================== */
 
 function exportCSV() {
 
@@ -2465,17 +3170,18 @@ function exportCSV() {
         return;
     }
 
-
     const headers = [
+
         '#',
         'Date & Heure',
         'Nom du produit',
         'Nom de famille',
         'Rendement',
         'Chargement total',
-        'Nombre de produits'
-    ];
+        'Quantité cumulative',
+        'Quantité non cumulative'
 
+    ];
 
     const rows =
         displayData.map(
@@ -2487,17 +3193,20 @@ function exportCSV() {
 
                 record.produit,
 
-                record.famille,
+                getFamily(record.produit) ||
+                    record.famille ||
+                    'Non classé',
 
                 `${record.rendement}%`,
 
                 record.chargementTotal,
 
-                record.nombreProduits
+                record.quantiteCumulative,
+
+                record.quantiteNonCumulative
 
             ]
         );
-
 
     const csvRows =
         [
@@ -2512,11 +3221,9 @@ function exportCSV() {
                 ).join(';')
         );
 
-
     const csv =
         '\uFEFF' +
         csvRows.join('\r\n');
-
 
     const blob =
         new Blob(
@@ -2527,22 +3234,19 @@ function exportCSV() {
             }
         );
 
-
     const url =
         URL.createObjectURL(blob);
-
 
     const link =
         document.createElement('a');
 
-
-    link.href = url;
+    link.href =
+        url;
 
     link.download =
         `historique_valeo_${new Date()
             .toISOString()
-            .slice(0,10)}.csv`;
-
+            .slice(0, 10)}.csv`;
 
     document.body.appendChild(link);
 
@@ -2551,11 +3255,98 @@ function exportCSV() {
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
-
 }
 
 
-/* EVENEMENTS */
+/* ==========================================
+   CONTROLES GRAPHIQUE
+========================================== */
+
+function setupChartControls() {
+
+    const mode =
+        document.getElementById(
+            'chart-mode'
+        );
+
+    const product =
+        document.getElementById(
+            'chart-product'
+        );
+
+    const metric =
+        document.getElementById(
+            'chart-metric'
+        );
+
+    const quantityMode =
+        document.getElementById(
+            'chart-quantity-mode'
+        );
+
+
+    mode.addEventListener(
+        'change',
+        function() {
+
+            if (this.value === 'all-products') {
+
+                product.style.display = 'none';
+                metric.style.display = 'none';
+                quantityMode.style.display = 'none';
+
+            } else {
+
+                product.style.display = 'block';
+                metric.style.display = 'block';
+
+                quantityMode.style.display =
+                    metric.value === 'quantity'
+                        ? 'block'
+                        : 'none';
+            }
+
+            updateChart(displayData);
+        }
+    );
+
+
+    product.addEventListener(
+        'change',
+        function() {
+
+            updateChart(displayData);
+        }
+    );
+
+
+    metric.addEventListener(
+        'change',
+        function() {
+
+            quantityMode.style.display =
+                this.value === 'quantity'
+                    ? 'block'
+                    : 'none';
+
+            updateChart(displayData);
+        }
+    );
+
+
+    quantityMode.addEventListener(
+        'change',
+        function() {
+
+            updateChart(displayData);
+        }
+    );
+}
+
+
+/* ==========================================
+   INITIALISATION
+========================================== */
 
 document.addEventListener(
     'DOMContentLoaded',
@@ -2568,6 +3359,8 @@ document.addEventListener(
         setupAccountMenu();
 
         populateProductDropdown();
+
+        setupChartControls();
 
 
         document.getElementById(
@@ -2597,7 +3390,6 @@ document.addEventListener(
                 ).value = '';
 
                 applyFilters();
-
             }
         );
 
@@ -2613,7 +3405,6 @@ document.addEventListener(
                 ).value = 'all';
 
                 applyFilters();
-
             }
         );
 
@@ -2627,13 +3418,12 @@ document.addEventListener(
 
 
         await loadHistory();
-
     }
 );
 
 </script>
 
-    <script src="js/camera-status.js"></script>
+<script src="js/camera-status.js"></script>
 
 </body>
 </html>

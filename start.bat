@@ -1,48 +1,73 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
+
+REM ============================================================
+REM VALEO INTELLIGENT CAMERA
+REM AI Vision Control System
+REM Deployment Launcher
+REM ============================================================
+
 color 0B
+title VALEO Intelligent Camera - AI Vision Control System
 cls
 
 echo.
-echo ======================================================
+echo ============================================================
 echo.
 echo              VALEO INTELLIGENT CAMERA
 echo              AI Vision Control System
 echo.
-echo ======================================================
+echo ============================================================
 echo.
 echo  Project : Industrial Camera Detection
-echo  Platform: Node.js + Python AI
-echo  AI      : YOLO + ResNet50
-echo  Mode    : Local AI - No Roboflow dependency
+echo  Platform: Node.js + Python AI (3.12)
 echo.
-echo  Creators:
-echo     - Iyed Tababi
-echo     - Samaher Ajimi
-echo     - Hichem Ajina
+echo ============================================================
 echo.
-echo ======================================================
+
+REM ============================================================
+REM [1/8] PROJECT PATH
+REM ============================================================
+
+echo [1/8] Checking project paths...
 echo.
 
 set "SCRIPT_DIR=%~dp0"
 set "SERVER_DIR=%SCRIPT_DIR%server"
 set "VENV=%SCRIPT_DIR%.venv"
+set "VENV_DIR=%VENV%"
 set "PYTHON_EXE=%VENV%\Scripts\python.exe"
-set "YOLO_MODEL=%SERVER_DIR%\best.pt"
-set "RESNET_MODEL=%SERVER_DIR%\resnet50_classification_best.pth"
 
-REM ======================================================
-REM 1. CHECK NODE.JS
-REM ======================================================
+echo Project directory:
+echo %SCRIPT_DIR%
+echo.
 
-echo [1/8] Checking Node.js...
+if not exist "%SERVER_DIR%" (
+    color 0C
+    echo ERROR: Server directory not found:
+    echo %SERVER_DIR%
+    echo.
+    echo Make sure the project contains a "server" folder.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo OK - Server directory found.
+echo.
+
+REM ============================================================
+REM [2/8] CHECK NODE.JS
+REM ============================================================
+
+echo [2/8] Checking Node.js...
 echo.
 
 where node >nul 2>&1
 
 if errorlevel 1 (
     color 0C
-    echo ERROR: Node.js is not installed.
+    echo ERROR: Node.js is not installed or not available in PATH.
     echo.
     echo Please install Node.js and restart this script.
     echo.
@@ -50,17 +75,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "delims=" %%i in ('node -v') do set "NODE_VERSION=%%i"
+node --version
 
-echo Node.js detected: %NODE_VERSION%
-echo.
-
-REM ======================================================
-REM 2. CHECK NPM
-REM ======================================================
-
-echo [2/8] Checking npm...
-echo.
+if errorlevel 1 (
+    color 0C
+    echo ERROR: Node.js cannot be executed.
+    echo.
+    pause
+    exit /b 1
+)
 
 where npm >nul 2>&1
 
@@ -72,68 +95,162 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "delims=" %%i in ('npm -v') do set "NPM_VERSION=%%i"
-
-echo npm detected: %NPM_VERSION%
-echo.
-
-REM ======================================================
-REM 3. CHECK PYTHON
-REM ======================================================
-
-echo [3/8] Checking Python...
-echo.
-
-where python >nul 2>&1
+call npm --version
 
 if errorlevel 1 (
     color 0C
-    echo ERROR: Python is not installed.
-    echo.
-    echo Please install Python 3 and restart this script.
+    echo ERROR: npm cannot be executed.
     echo.
     pause
     exit /b 1
 )
 
-for /f "delims=" %%i in ('python --version') do set "PYTHON_VERSION=%%i"
-
-echo System Python detected: %PYTHON_VERSION%
+echo.
+echo OK - Node.js and npm are available.
 echo.
 
-REM ======================================================
-REM 4. CREATE / CHECK VIRTUAL ENVIRONMENT
-REM ======================================================
+REM ============================================================
+REM [3/8] DETECT PYTHON 3.12
+REM ============================================================
 
-echo [4/8] Preparing Python virtual environment...
+echo [3/8] Checking for Python 3.12...
 echo.
 
-if not exist "%PYTHON_EXE%" (
+set "PYTHON_CMD="
 
-    echo Python virtual environment not found.
-    echo Creating:
+echo Testing Python Launcher (py -3.12)...
+py -3.12 --version >nul 2>&1
+
+if not errorlevel 1 (
+    set "PYTHON_CMD=py -3.12"
+    echo OK - Python 3.12 detected via Launcher.
+    py -3.12 --version
+    goto PYTHON_FOUND
+)
+
+echo Launcher not working. Searching Python 3.12 paths...
+echo.
+
+if exist "%LocalAppData%\Programs\Python\Python312\python.exe" (
+    set "PYTHON_CMD=%LocalAppData%\Programs\Python\Python312\python.exe"
+    echo OK - Found Python 3.12 in LocalAppData.
+    goto PYTHON_FOUND
+)
+
+if exist "%ProgramFiles%\Python312\python.exe" (
+    set "PYTHON_CMD=%ProgramFiles%\Python312\python.exe"
+    echo OK - Found Python 3.12 in ProgramFiles.
+    goto PYTHON_FOUND
+)
+
+echo Testing default python command...
+echo.
+
+python --version >nul 2>&1
+
+if not errorlevel 1 (
+    for /f "tokens=2" %%A in ('python --version 2^>^&1') do set "PYTHON_VERSION=%%A"
+
+    if "!PYTHON_VERSION!"=="3.12.0" goto DEFAULT_PYTHON_FOUND
+    if "!PYTHON_VERSION:~0,4!"=="3.12" goto DEFAULT_PYTHON_FOUND
+
+    echo WARNING - Python found but version is !PYTHON_VERSION!.
+    echo Python 3.12 is required.
+    echo.
+)
+
+color 0C
+echo ============================================================
+echo ERROR: PYTHON 3.12 NOT FOUND
+echo ============================================================
+echo.
+echo Please install Python 3.12.x from python.org
+echo Make sure to check "Add python.exe to PATH" during installation.
+echo.
+pause
+exit /b 1
+
+:DEFAULT_PYTHON_FOUND
+set "PYTHON_CMD=python"
+echo OK - Python 3.12 detected via default Python command.
+python --version
+goto PYTHON_FOUND
+
+:PYTHON_FOUND
+
+echo.
+echo Python command:
+echo %PYTHON_CMD%
+echo.
+
+if "%PYTHON_CMD%"=="py -3.12" (
+    py -3.12 --version
+) else if "%PYTHON_CMD%"=="python" (
+    python --version
+) else (
+    "%PYTHON_CMD%" --version
+)
+
+if errorlevel 1 (
+    color 0C
+    echo ERROR: Python was found but cannot be executed.
+    echo.
+    echo Detected command:
+    echo %PYTHON_CMD%
+    echo.
+    pause
+    exit /b 1
+)
+
+echo.
+echo OK - Python is working.
+echo.
+
+REM ============================================================
+REM [4/8] CREATE / CHECK VIRTUAL ENVIRONMENT
+REM ============================================================
+
+echo [4/8] Checking virtual environment...
+echo.
+
+if exist "%PYTHON_EXE%" (
+    echo OK - Existing virtual environment found.
+    echo.
+    goto VENV_READY
+)
+
+echo Virtual environment not found.
+echo Creating:
+echo %VENV%
+echo.
+
+if "%PYTHON_CMD%"=="py -3.12" (
+    py -3.12 -m venv "%VENV%"
+) else if "%PYTHON_CMD%"=="python" (
+    python -m venv "%VENV%"
+) else (
+    "%PYTHON_CMD%" -m venv "%VENV%"
+)
+
+if errorlevel 1 (
+    color 0C
+    echo.
+    echo ERROR: Failed to create Python virtual environment.
+    echo.
+    echo Python used:
+    echo %PYTHON_CMD%
+    echo.
+    echo Target:
     echo %VENV%
     echo.
-
-    python -m venv "%VENV%"
-
-    if errorlevel 1 (
-        color 0C
-        echo.
-        echo ERROR: Failed to create Python virtual environment.
-        echo.
-        pause
-        exit /b 1
-    )
-
-    echo.
-    echo Virtual environment created successfully.
-    echo.
+    pause
+    exit /b 1
 )
 
 if not exist "%PYTHON_EXE%" (
     color 0C
-    echo ERROR: Python executable not found.
+    echo ERROR: Virtual environment was created but
+    echo python.exe was not found.
     echo.
     echo Expected:
     echo %PYTHON_EXE%
@@ -142,7 +259,13 @@ if not exist "%PYTHON_EXE%" (
     exit /b 1
 )
 
-echo Virtual environment:
+echo.
+echo OK - Virtual environment created.
+echo.
+
+:VENV_READY
+
+echo Python environment:
 echo %PYTHON_EXE%
 echo.
 
@@ -150,93 +273,157 @@ echo.
 
 if errorlevel 1 (
     color 0C
-    echo.
-    echo ERROR: Virtual environment Python is not working.
+    echo ERROR: Virtual environment Python cannot be executed.
     echo.
     pause
     exit /b 1
 )
 
 echo.
-
-REM ======================================================
-REM 5. INSTALL PYTHON AI DEPENDENCIES
-REM ======================================================
-
-echo [5/8] Preparing local AI dependencies...
 echo.
 
-"%PYTHON_EXE%" -m ensurepip --upgrade >nul 2>&1
+REM ============================================================
+REM [5/8] INSTALL PYTHON DEPENDENCIES
+REM ============================================================
 
-echo Updating pip...
+echo [5/8] Checking Python AI dependencies...
 echo.
 
+echo Upgrading pip...
 "%PYTHON_EXE%" -m pip install --upgrade pip
 
 if errorlevel 1 (
-    color 0C
     echo.
-    echo ERROR: pip update failed.
+    echo WARNING: pip upgrade failed.
+    echo Continuing with existing pip...
     echo.
-    pause
-    exit /b 1
 )
 
 echo.
-echo Checking PyTorch, Torchvision, Ultralytics and Pillow...
+echo Checking PyTorch...
 echo.
 
-"%PYTHON_EXE%" -c "import torch; import torchvision; import ultralytics; from PIL import Image; print('PyTorch:', torch.__version__); print('Torchvision:', torchvision.__version__); print('Ultralytics:', ultralytics.__version__); print('Pillow: OK')" > "%TEMP%\valeo_ai_check.txt" 2>&1
+"%PYTHON_EXE%" -c "import torch; print('PyTorch OK - version:', torch.__version__)" >nul 2>&1
 
 if errorlevel 1 (
-
-    echo AI dependencies are missing or invalid.
-    echo Installing required packages...
+    echo PyTorch not installed.
+    echo Installing PyTorch...
     echo.
 
-    "%PYTHON_EXE%" -m pip install torch torchvision ultralytics pillow
+    "%PYTHON_EXE%" -m pip install torch torchvision
 
     if errorlevel 1 (
         color 0C
         echo.
-        echo ERROR: Python AI dependencies installation failed.
-        echo.
-        echo Required packages:
-        echo - torch
-        echo - torchvision
-        echo - ultralytics
-        echo - pillow
+        echo ERROR: PyTorch installation failed.
         echo.
         pause
         exit /b 1
     )
-
 ) else (
-
-    echo AI dependencies already installed.
-    echo.
-    type "%TEMP%\valeo_ai_check.txt"
+    echo OK - PyTorch already installed.
 )
 
 echo.
-
-REM ======================================================
-REM 6. CHECK AI MODELS
-REM ======================================================
-
-echo [6/8] Checking local AI models...
+echo Checking torchvision...
 echo.
 
-if not exist "%SERVER_DIR%" (
+"%PYTHON_EXE%" -c "import torchvision; print('Torchvision OK')" >nul 2>&1
+
+if errorlevel 1 (
+    echo Torchvision not installed.
+    echo Installing torchvision...
+    echo.
+
+    "%PYTHON_EXE%" -m pip install torchvision
+
+    if errorlevel 1 (
+        color 0C
+        echo.
+        echo ERROR: Torchvision installation failed.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    echo OK - Torchvision already installed.
+)
+
+echo.
+echo Checking Ultralytics...
+echo.
+
+"%PYTHON_EXE%" -c "import ultralytics; print('Ultralytics OK')" >nul 2>&1
+
+if errorlevel 1 (
+    echo Ultralytics not installed.
+    echo Installing Ultralytics...
+    echo.
+
+    "%PYTHON_EXE%" -m pip install ultralytics
+
+    if errorlevel 1 (
+        color 0C
+        echo.
+        echo ERROR: Ultralytics installation failed.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    echo OK - Ultralytics already installed.
+)
+
+echo.
+echo Checking Pillow...
+echo.
+
+"%PYTHON_EXE%" -c "from PIL import Image; print('Pillow OK')" >nul 2>&1
+
+if errorlevel 1 (
+    echo Pillow not installed.
+    echo Installing Pillow...
+    echo.
+
+    "%PYTHON_EXE%" -m pip install pillow
+
+    if errorlevel 1 (
+        color 0C
+        echo.
+        echo ERROR: Pillow installation failed.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    echo OK - Pillow already installed.
+)
+
+echo.
+echo ============================================================
+echo Python AI dependencies ready.
+echo ============================================================
+echo.
+
+REM ============================================================
+REM [6/8] CHECK PROJECT FILES
+REM ============================================================
+
+echo [6/8] Checking project files...
+echo.
+
+if not exist "%SERVER_DIR%\server.js" (
     color 0C
-    echo ERROR: Server directory not found.
+    echo ERROR: server.js not found.
     echo.
     echo Expected:
-    echo %SERVER_DIR%
+    echo %SERVER_DIR%\server.js
     echo.
     pause
     exit /b 1
 )
+
+echo OK - server.js
 
 if not exist "%SERVER_DIR%\inference.py" (
     color 0C
@@ -249,117 +436,131 @@ if not exist "%SERVER_DIR%\inference.py" (
     exit /b 1
 )
 
-if not exist "%YOLO_MODEL%" (
+echo OK - inference.py
+
+if not exist "%SERVER_DIR%\best.pt" (
     color 0C
     echo ERROR: YOLO model not found.
     echo.
     echo Expected:
-    echo %YOLO_MODEL%
-    echo.
-    echo The file must be included with the project.
+    echo %SERVER_DIR%\best.pt
     echo.
     pause
     exit /b 1
 )
 
-if not exist "%RESNET_MODEL%" (
+echo OK - best.pt
+
+if not exist "%SERVER_DIR%\resnet50_classification_best.pth" (
     color 0C
     echo ERROR: ResNet50 model not found.
     echo.
     echo Expected:
-    echo %RESNET_MODEL%
-    echo.
-    echo The file must be included with the project.
+    echo %SERVER_DIR%\resnet50_classification_best.pth
     echo.
     pause
     exit /b 1
 )
 
+echo OK - resnet50_classification_best.pth
+
 echo.
-echo YOLO model found:
-echo %YOLO_MODEL%
+echo All required project files found.
 echo.
 
-echo ResNet50 model found:
-echo %RESNET_MODEL%
-echo.
-
-REM ======================================================
-REM 7. TEST BOTH AI MODELS
-REM ======================================================
+REM ============================================================
+REM [7/8] TEST AI MODELS
+REM ============================================================
 
 echo [7/8] Testing AI models...
 echo.
 
-echo.
-echo -----------------------------------------------
-echo Testing YOLO model...
-echo -----------------------------------------------
-echo.
+echo ------------------------------------------------------------
+echo Testing PyTorch
+echo ------------------------------------------------------------
 
-"%PYTHON_EXE%" -c "from ultralytics import YOLO; model=YOLO(r'%YOLO_MODEL%'); print('YOLO model loaded successfully.'); print('Classes:', model.names)"
+"%PYTHON_EXE%" -c "import torch; print('Torch version:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
 
 if errorlevel 1 (
     color 0C
     echo.
-    echo ERROR: YOLO model cannot be loaded.
+    echo ERROR: PyTorch test failed.
     echo.
     pause
     exit /b 1
 )
 
 echo.
-echo YOLO test: OK
-echo.
+echo ------------------------------------------------------------
+echo Testing Ultralytics / YOLO
+echo ------------------------------------------------------------
 
-echo.
-echo -----------------------------------------------
-echo Testing ResNet50 model...
-echo -----------------------------------------------
-echo.
-
-"%PYTHON_EXE%" -c "import torch; checkpoint=torch.load(r'%RESNET_MODEL%', map_location='cpu'); assert isinstance(checkpoint, dict); assert 'model_state_dict' in checkpoint; assert 'classes' in checkpoint; assert 'num_classes' in checkpoint; print('ResNet50 model file loaded successfully.'); print('Classes:', checkpoint['classes']); print('Number of classes:', checkpoint['num_classes'])"
+"%PYTHON_EXE%" -c "from ultralytics import YOLO; model=YOLO(r'%SERVER_DIR%\best.pt'); print('YOLO model loaded successfully'); print('Classes:', model.names)"
 
 if errorlevel 1 (
     color 0C
     echo.
-    echo ERROR: ResNet50 model cannot be loaded.
+    echo ERROR: YOLO model could not be loaded.
     echo.
-    echo The model must contain:
-    echo - model_state_dict
-    echo - classes
-    echo - num_classes
+    echo Model:
+    echo %SERVER_DIR%\best.pt
     echo.
     pause
     exit /b 1
 )
 
 echo.
-echo ResNet50 test: OK
-echo.
+echo ------------------------------------------------------------
+echo Testing ResNet50
+echo ------------------------------------------------------------
+
+"%PYTHON_EXE%" -c "import torch; p=r'%SERVER_DIR%\resnet50_classification_best.pth'; c=torch.load(p,map_location='cpu'); assert isinstance(c,dict); assert 'model_state_dict' in c; assert 'classes' in c; assert 'num_classes' in c; print('ResNet50 checkpoint loaded successfully'); print('Classes:', c['classes']); print('Number of classes:', c['num_classes'])"
+
+if errorlevel 1 (
+    color 0C
+    echo.
+    echo ERROR: ResNet50 model could not be loaded.
+    echo.
+    echo Model:
+    echo %SERVER_DIR%\resnet50_classification_best.pth
+    echo.
+    echo The checkpoint must contain:
+    echo     model_state_dict
+    echo     classes
+    echo     num_classes
+    echo.
+    pause
+    exit /b 1
+)
 
 echo.
-echo ======================================================
-echo.
-echo              AI ENVIRONMENT READY
-echo.
-echo              YOLO     : OK
-echo              ResNet50 : OK
-echo              Roboflow : NOT REQUIRED
-echo.
-echo ======================================================
+echo ============================================================
+echo AI MODELS READY
+echo ============================================================
 echo.
 
-REM ======================================================
-REM 8. NODE.JS DEPENDENCIES + START SERVER
-REM ======================================================
+REM ============================================================
+REM [8/8] NODE.JS DEPENDENCIES + START SERVER
+REM ============================================================
 
-echo [8/8] Preparing Node.js application...
+echo [8/8] Preparing Node.js server...
 echo.
 
 cd /d "%SERVER_DIR%"
 
-if not exist "%SERVER_DIR%\package.json" (
+if errorlevel 1 (
+    color 0C
+    echo ERROR: Cannot access server directory.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Current directory:
+cd
+echo.
+
+if not exist "package.json" (
     color 0C
     echo ERROR: package.json not found.
     echo.
@@ -370,10 +571,12 @@ if not exist "%SERVER_DIR%\package.json" (
     exit /b 1
 )
 
-if not exist "%SERVER_DIR%\node_modules" (
+echo package.json found.
+echo.
 
+if not exist "node_modules" (
     echo node_modules not found.
-    echo Installing npm dependencies...
+    echo Installing Node.js dependencies...
     echo.
 
     call npm install
@@ -381,67 +584,82 @@ if not exist "%SERVER_DIR%\node_modules" (
     if errorlevel 1 (
         color 0C
         echo.
-        echo ERROR: npm installation failed.
+        echo ERROR: npm install failed.
         echo.
         pause
         exit /b 1
     )
-
-    echo.
-    echo npm dependencies installed successfully.
-    echo.
-)
-
-echo Node.js dependencies ready.
-echo.
-
-REM ======================================================
-REM CHECK PORT 3000
-REM ======================================================
-
-echo Checking port 3000...
-echo.
-
-for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING" 2^>nul') do (
-    echo Closing process PID %%P using port 3000...
-    taskkill /PID %%P /F >nul 2>&1
+) else (
+    echo OK - node_modules already exists.
 )
 
 echo.
-echo ======================================================
+echo ============================================================
+echo STARTING VALEO SMART CAMERA
+echo ============================================================
 echo.
-echo              STARTING VALEO SERVER
+echo Python:
+echo %PYTHON_EXE%
 echo.
-echo ======================================================
+echo Server:
+echo %SERVER_DIR%\server.js
 echo.
-echo  URL       : http://localhost:3000
-echo  AI        : Local models
-echo  YOLO      : Object Detection
-echo  ResNet50  : Image Classification
-echo  Roboflow  : Not required for inference
+echo YOLO:
+echo %SERVER_DIR%\best.pt
 echo.
-echo  Python    : %PYTHON_EXE%
+echo ResNet50:
+echo %SERVER_DIR%\resnet50_classification_best.pth
 echo.
-echo  YOLO      : %YOLO_MODEL%
-echo  ResNet50  : %RESNET_MODEL%
+echo ============================================================
 echo.
-echo  Press CTRL+C to stop the server
+echo Roboflow dependency: DISABLED
+echo Local AI models: ENABLED
 echo.
-echo ======================================================
+echo URL: http://localhost:3000
+echo.
+echo ============================================================
 echo.
 
-REM ======================================================
-REM START NODE.JS
-REM ======================================================
+REM ============================================================
+REM SET PYTHON USED BY SERVER
+REM ============================================================
+
+set "VALEO_PYTHON=%PYTHON_EXE%"
+
+echo VALEO_PYTHON:
+echo %VALEO_PYTHON%
+echo.
+
+REM ============================================================
+REM OPEN GOOGLE CHROME AUTOMATICALLY
+REM ============================================================
+
+echo Waiting for server startup...
+echo.
+
+start "" "http://localhost:3000"
+
+echo Google Chrome opening:
+echo http://localhost:3000
+echo.
+
+REM ============================================================
+REM START NODE SERVER
+REM ============================================================
+
+echo Starting Node.js server...
+echo.
 
 node server.js
 
 echo.
+echo ============================================================
+echo SERVER STOPPED
+echo ============================================================
 echo.
-echo ======================================================
-echo              VALEO SERVER STOPPED
-echo ======================================================
+echo If the server stopped because of an error,
+echo read the message displayed above.
 echo.
-
 pause
+
 endlocal

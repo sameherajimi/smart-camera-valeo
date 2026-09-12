@@ -4,9 +4,10 @@ const path = require('path');
 const fs = require('fs/promises');
 const fsSync = require('fs');
 const XLSX = require('xlsx');
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process'); // Ajout de spawn
 const { promisify } = require('util');
 const nodemailer = require('nodemailer');
+const readline = require('readline'); // Ajout de readline pour lire le flux
 
 const {
     getDatabase,
@@ -24,30 +25,35 @@ const {
 
 const execFileAsync = promisify(execFile);
 
+// Chemin mis à jour vers votre environnement virtuel
 const pythonCommand =
     process.env.VALEO_PYTHON ||
-    (process.platform === 'win32' ? 'python' : 'python3');
+    'C:\\Users\\hajina\\Downloads\\smart-camera-valeo-master\\.venv\\Scripts\\python.exe';
 
 const app = express();
 const PORT = 3000;
 
-const capturesDirectory =
-    path.join(__dirname, 'captures');
-
-const HISTORY_FILE =
-    path.join(__dirname, 'history.json');
+const capturesDirectory = path.join(__dirname, 'captures');
+const HISTORY_FILE = path.join(__dirname, 'history.json');
 
 const XML_DIRECTORY =
     process.env.VALEO_XML_DIRECTORY ||
     path.join(__dirname, 'xml');
 
 const XML_SCHEMA_PATH =
-    'C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd';
+    process.env.VALEO_XML_SCHEMA_PATH ||
+    (
+        process.platform === 'win32'
+            ? 'C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd'
+            : '/var/www/html/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd'
+    );
 
 const BASE_DATA_PATH =
     process.env.VALEO_BASE_DATA_PATH ||
     path.join(
-        process.env.USERPROFILE || '',
+        process.env.USERPROFILE ||
+        process.env.HOME ||
+        '',
         'Downloads',
         'BASE DONNEES (1).xlsx'
     );
@@ -62,9 +68,7 @@ function escapeXml(value) {
 }
 
 function formatXmlDateTime(value) {
-    const date = value
-        ? new Date(value)
-        : new Date();
+    const date = value ? new Date(value) : new Date();
 
     if (Number.isNaN(date.getTime())) {
         return formatXmlDateTime(new Date());
@@ -76,11 +80,8 @@ function formatXmlDateTime(value) {
 
     let hours = date.getHours();
 
-    const minutes =
-        String(date.getMinutes()).padStart(2, '0');
-
-    const ampm =
-        hours >= 12 ? 'PM' : 'AM';
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
 
     hours = hours % 12 || 12;
 
@@ -93,7 +94,10 @@ function buildProductionXml(
     quantityTotal
 ) {
     return `<?xml version="1.0" encoding="UTF-8"?>
-<FSA_INT_FlatFileManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="${XML_SCHEMA_PATH}" Version="1.0">
+<FSA_INT_FlatFileManager
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="${XML_SCHEMA_PATH}"
+    Version="1.0">
 <FIInvocationSynchronousEvent NodeType="FIInvocation">
 <StandardOperation>
 <OperationResolutionMethod>ByOperationCode</OperationResolutionMethod>
@@ -163,22 +167,105 @@ function normalizeNumeric(value) {
     }
 
     if (typeof value === 'number') {
-        return Number.isFinite(value)
-            ? value
-            : 0;
+        return Number.isFinite(value) ? value : 0;
     }
 
-    const cleaned =
-        String(value)
-            .replace(/[^0-9.,-]/g, '')
-            .replace(',', '.');
+    const cleaned = String(value)
+        .replace(/[^0-9.,-]/g, '')
+        .replace(',', '.');
 
-    const parsed =
-        Number(cleaned);
+    const parsed = Number(cleaned);
 
-    return Number.isFinite(parsed)
-        ? parsed
-        : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeProductKey(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ');
+}
+
+function getDetectionQuantity(record) {
+    if (
+        record &&
+        record.quantite_non_cumulative !== undefined &&
+        record.quantite_non_cumulative !== null
+    ) {
+        return normalizeNumeric(
+            record.quantite_non_cumulative
+        );
+    }
+
+    if (
+        record &&
+        record.quantite_detection !== undefined &&
+        record.quantite_detection !== null
+    ) {
+        return normalizeNumeric(
+            record.quantite_detection
+        );
+    }
+
+    return normalizeNumeric(
+        record?.quantite
+    );
+}
+
+function calculateProductCumulative(history, product) {
+    const key = normalizeProductKey(product);
+
+    return history
+        .filter(record => {
+            return normalizeProductKey(
+                record.produit
+            ) === key;
+        })
+        .reduce((sum, record) => {
+            return sum + getDetectionQuantity(record);
+        }, 0);
+}
+
+function enrichHistoryRecords(history) {
+    const totals = new Map();
+
+    const chronological = [...history].reverse();
+
+    const enrichedChronological = chronological.map(record => {
+        const key = normalizeProductKey(
+            record.produit
+        );
+
+        const detectionQuantity =
+            getDetectionQuantity(record);
+
+        const previousTotal =
+            totals.get(key) || 0;
+
+        const cumulativeTotal =
+            previousTotal + detectionQuantity;
+
+        totals.set(
+            key,
+            cumulativeTotal
+        );
+
+        return {
+            ...record,
+            quantite_detection:
+                detectionQuantity,
+            quantite_non_cumulative:
+                detectionQuantity,
+            quantite_cumulative:
+                cumulativeTotal,
+            quantite_totale:
+                cumulativeTotal
+        };
+    });
+
+    return enrichedChronological.reverse();
 }
 
 function readBaseDonneesFromExcel(filePath) {
@@ -189,8 +276,7 @@ function readBaseDonneesFromExcel(filePath) {
         return [];
     }
 
-    const workbook =
-        XLSX.readFile(filePath);
+    const workbook = XLSX.readFile(filePath);
 
     const sheetName =
         workbook.SheetNames.find(
@@ -267,8 +353,7 @@ function readBaseDonneesFromExcel(filePath) {
                 return;
             }
 
-            const aliases =
-                new Set();
+            const aliases = new Set();
 
             if (product) {
                 aliases.add(product);
@@ -317,31 +402,24 @@ function readBaseDonneesFromExcel(filePath) {
                 rows.push({
                     id:
                         `EXCEL-${rows.length + 1}`,
-
                     date:
                         new Date()
                             .toLocaleDateString(
                                 'fr-FR'
                             ),
-
                     heure:
                         new Date()
                             .toLocaleTimeString(
                                 'fr-FR'
                             ),
-
                     produit:
                         cleanAlias,
-
                     quantite:
                         numericQuantity,
-
                     quantite_totale:
                         numericQuantity,
-
                     jigs_totales:
                         Number(jigsTotales) || 0,
-
                     taux:
                         `${Math.min(
                             100,
@@ -350,22 +428,20 @@ function readBaseDonneesFromExcel(filePath) {
                                 numericQuantity
                             )
                         )}%`,
-
                     jigs:
                         normalizeNumeric(
                             row[3] || 0
                         ),
-
                     kits:
                         normalizeNumeric(
                             row[4] || 0
                         ),
-
                     consommation:
                         normalizeNumeric(
                             row[6] || 0
                         ),
-
+                    famille:
+                        family || '—',
                     sheet:
                         'Table'
                 });
@@ -386,10 +462,11 @@ async function readHistoryFile() {
         const parsed =
             JSON.parse(raw);
 
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
 
+        return enrichHistoryRecords(parsed);
     } catch (error) {
         if (error.code === 'ENOENT') {
             return [];
@@ -405,10 +482,13 @@ async function readHistoryFile() {
 }
 
 async function writeHistoryFile(history) {
+    const normalizedHistory =
+        enrichHistoryRecords(history);
+
     await fs.writeFile(
         HISTORY_FILE,
         JSON.stringify(
-            history,
+            normalizedHistory,
             null,
             2
         ),
@@ -438,10 +518,8 @@ function findProductReference(product) {
                     row.produit || ''
                 )
                     .trim()
-                    .toLowerCase() ===
-                target
+                    .toLowerCase() === target
             ) ||
-
             rows.find(row => {
                 const current =
                     String(
@@ -455,10 +533,8 @@ function findProductReference(product) {
                     target.includes(current)
                 );
             }) ||
-
             null
         );
-
     } catch (error) {
         console.error(
             'Erreur recherche référence produit:',
@@ -469,7 +545,11 @@ function findProductReference(product) {
     }
 }
 
-async function saveDetectionEvents(counts) {
+async function saveDetectionEvents(
+    counts,
+    jigCount = 0,
+    dashboardRendement = null
+) {
     if (
         !counts ||
         typeof counts !== 'object'
@@ -485,7 +565,6 @@ async function saveDetectionEvents(counts) {
                         String(
                             product || ''
                         ).trim(),
-
                     quantity:
                         normalizeNumeric(
                             quantity
@@ -505,13 +584,27 @@ async function saveDetectionEvents(counts) {
         await readHistoryFile();
 
     const saved = [];
+    const now = new Date();
 
-    const now =
-        new Date();
+    const jigsDetectees =
+        normalizeNumeric(
+            jigCount
+        );
 
-    for (
-        const item of validProducts
+    let rendementDashboard = null;
+
+    if (
+        dashboardRendement !== null &&
+        dashboardRendement !== undefined &&
+        dashboardRendement !== ''
     ) {
+        rendementDashboard =
+            normalizeNumeric(
+                dashboardRendement
+            );
+    }
+
+    for (const item of validProducts) {
         const reference =
             findProductReference(
                 item.product
@@ -529,43 +622,42 @@ async function saveDetectionEvents(counts) {
             '—';
 
         const previousTotal =
-            history
-                .filter(record =>
-                    String(
-                        record.produit || ''
-                    )
-                        .trim()
-                        .toLowerCase() ===
-                    item.product.toLowerCase()
-                )
-                .reduce(
-                    (
-                        sum,
-                        record
-                    ) =>
-                        sum +
-                        normalizeNumeric(
-                            record.quantite
-                        ),
-                    0
-                );
+            calculateProductCumulative(
+                history,
+                item.product
+            );
 
         const totalLoading =
             previousTotal +
             item.quantity;
 
-        const rendement =
-            jigsTotal > 0
-                ? Math.min(
+        let rendement;
+
+        if (
+            rendementDashboard !== null
+        ) {
+            rendement =
+                Math.min(
                     100,
-                    Math.round(
-                        (
-                            item.quantity /
-                            jigsTotal
-                        ) * 100
+                    Math.max(
+                        0,
+                        rendementDashboard
                     )
-                )
-                : 0;
+                );
+        } else {
+            rendement =
+                jigsTotal > 0
+                    ? Math.min(
+                        100,
+                        Math.round(
+                            (
+                                item.quantity /
+                                jigsTotal
+                            ) * 100
+                        )
+                    )
+                    : 0;
+        }
 
         const record = {
             id:
@@ -573,41 +665,38 @@ async function saveDetectionEvents(counts) {
                     .toString(36)
                     .slice(2, 8)
                     .toUpperCase()}`,
-
             date:
                 now.toLocaleDateString(
                     'fr-FR'
                 ),
-
             heure:
                 now.toLocaleTimeString(
                     'fr-FR'
                 ),
-
             timestamp:
                 now.toISOString(),
-
             produit:
                 item.product,
-
             famille:
                 family,
-
             quantite:
                 item.quantity,
-
+            quantite_detection:
+                item.quantity,
+            quantite_non_cumulative:
+                item.quantity,
+            quantite_cumulative:
+                totalLoading,
             quantite_totale:
                 totalLoading,
-
             chargement_total:
-                totalLoading,
-
+                jigsDetectees,
+            jigs_detectees:
+                jigsDetectees,
             jigs_totales:
                 jigsTotal,
-
             rendement:
                 rendement,
-
             taux:
                 `${rendement}%`
         };
@@ -617,7 +706,10 @@ async function saveDetectionEvents(counts) {
     }
 
     await writeHistoryFile(
-        history.slice(0, 10000)
+        history.slice(
+            0,
+            10000
+        )
     );
 
     return saved;
@@ -634,7 +726,6 @@ app.get(
                 success: true,
                 history
             });
-
         } catch (error) {
             console.error(
                 'Erreur API historique:',
@@ -644,7 +735,7 @@ app.get(
             res.status(500).json({
                 success: false,
                 message:
-                    'Impossible de charger l\'historique.',
+                    "Impossible de charger l'historique.",
                 history: []
             });
         }
@@ -672,70 +763,106 @@ app.post(
             const history =
                 await readHistoryFile();
 
+            const product =
+                String(
+                    record.produit || ''
+                ).trim();
+
+            const jigsDetectees =
+                normalizeNumeric(
+                    record.jigs_detectees ??
+                    record.jigsDetectees ??
+                    record.jig_count ??
+                    record.jigCount ??
+                    record.jigs ??
+                    0
+                );
+
+            const rendement =
+                normalizeNumeric(
+                    record.rendement ??
+                    record.taux ??
+                    record.yield ??
+                    0
+                );
+
+            const detectionQuantity =
+                normalizeNumeric(
+                    record.quantite_non_cumulative ??
+                    record.quantite_detection ??
+                    record.quantite
+                );
+
+            const previousTotal =
+                calculateProductCumulative(
+                    history,
+                    product
+                );
+
+            const cumulativeTotal =
+                previousTotal +
+                detectionQuantity;
+
+            const reference =
+                findProductReference(
+                    product
+                ) || {};
+
+            const family =
+                record.famille ||
+                reference.famille ||
+                '—';
+
+            const jigsTotal =
+                normalizeNumeric(
+                    record.jigs_totales ??
+                    reference.jigs_totales ??
+                    reference.jigs ??
+                    0
+                );
+
             const newRecord = {
                 id:
                     `VAL-${Date.now()}-${Math.random()
                         .toString(36)
                         .slice(2, 8)
                         .toUpperCase()}`,
-
                 date:
                     new Date()
                         .toLocaleDateString(
                             'fr-FR'
                         ),
-
                 heure:
                     new Date()
                         .toLocaleTimeString(
                             'fr-FR'
                         ),
-
                 timestamp:
                     new Date().toISOString(),
-
                 produit:
-                    String(
-                        record.produit || ''
-                    ).trim(),
-
+                    product,
                 famille:
-                    record.famille ||
-                    '—',
-
+                    family,
                 quantite:
-                    normalizeNumeric(
-                        record.quantite
-                    ),
-
+                    detectionQuantity,
+                quantite_detection:
+                    detectionQuantity,
+                quantite_non_cumulative:
+                    detectionQuantity,
+                quantite_cumulative:
+                    cumulativeTotal,
                 quantite_totale:
-                    normalizeNumeric(
-                        record.quantite
-                    ),
-
+                    cumulativeTotal,
                 chargement_total:
-                    normalizeNumeric(
-                        record.quantite
-                    ),
-
+                    jigsDetectees,
+                jigs_detectees:
+                    jigsDetectees,
                 jigs_totales:
-                    normalizeNumeric(
-                        record.jigs_totales
-                    ),
-
+                    jigsTotal,
                 rendement:
-                    normalizeNumeric(
-                        String(
-                            record.taux ||
-                            '0'
-                        )
-                            .replace('%', '')
-                            .replace(',', '.')
-                    ),
-
+                    rendement,
                 taux:
-                    record.taux ||
-                    '0%'
+                    `${rendement}%`
             };
 
             history.unshift(
@@ -743,14 +870,17 @@ app.post(
             );
 
             await writeHistoryFile(
-                history.slice(0, 10000)
+                history.slice(
+                    0,
+                    10000
+                )
             );
 
             res.json({
                 success: true,
-                record: newRecord
+                record:
+                    newRecord
             });
-
         } catch (error) {
             console.error(
                 'Erreur API historique POST:',
@@ -760,7 +890,7 @@ app.post(
             res.status(500).json({
                 success: false,
                 message:
-                    'Impossible de sauvegarder dans l\'historique.'
+                    "Impossible de sauvegarder dans l'historique."
             });
         }
     }
@@ -784,7 +914,6 @@ app.get(
                 data:
                     rows
             });
-
         } catch (error) {
             console.error(
                 'Erreur lecture Excel serveur:',
@@ -819,47 +948,28 @@ app.get(
                 success: true,
                 capture:
                     'test-capture.jpg',
-
                 detections: [
                     {
                         product:
                             testProduct,
-
                         confidence:
                             0.95,
-
-                        x:
-                            null,
-
-                        y:
-                            null,
-
-                        width:
-                            null,
-
-                        height:
-                            null,
-
+                        x: null,
+                        y: null,
+                        width: null,
+                        height: null,
                         model:
                             'primary'
                     }
                 ],
-
                 counts: {
                     [testProduct]: 1
                 },
-
                 jig_detections: [],
-
-                jig_count:
-                    0,
-
+                jig_count: 0,
                 jig_counts: {},
-
-                test:
-                    true
+                test: true
             });
-
         } catch (error) {
             console.error(
                 'Test detection error:',
@@ -868,48 +978,203 @@ app.get(
 
             res.json({
                 success: true,
-
                 capture:
                     'test-capture.jpg',
-
                 detections: [
                     {
                         product:
                             'PRODUIT_TEST',
-
                         confidence:
                             0.95,
-
-                        x:
-                            null,
-
-                        y:
-                            null,
-
-                        width:
-                            null,
-
-                        height:
-                            null,
-
+                        x: null,
+                        y: null,
+                        width: null,
+                        height: null,
                         model:
                             'primary'
                     }
                 ],
-
                 counts: {
                     PRODUIT_TEST: 1
                 },
-
                 jig_detections: [],
-
-                jig_count:
-                    0,
-
+                jig_count: 0,
                 jig_counts: {},
+                test: true
+            });
+        }
+    }
+);
 
-                test:
-                    true
+// ==========================================
+// NOUVEAU CODE STREAM OPTIMISE 
+// ==========================================
+let cognexLatestFrame = null;
+let cognexCaptureLoopStarted = false;
+let cognexLastCaptureError = null;
+let cognexProcess = null;
+
+function startCognexCaptureLoop() {
+    if (cognexCaptureLoopStarted) return;
+    cognexCaptureLoopStarted = true;
+
+    const cognexScript = path.join(__dirname, 'cognex_camera.py');
+
+    // Launch Python script in the optimized 'stream' mode
+    cognexProcess = spawn(pythonCommand, ['-u', cognexScript, 'stream'], {
+        cwd: __dirname,
+        env: process.env
+    });
+
+    // Use readline to parse JSON line-by-line safely
+    const rl = readline.createInterface({
+        input: cognexProcess.stdout,
+        terminal: false
+    });
+
+    rl.on('line', (line) => {
+        try {
+            const parsed = JSON.parse(line);
+            if (parsed.success) {
+                cognexLatestFrame = {
+                    success: true,
+                    image: parsed.image,
+                    width: parsed.width || 640,
+                    height: parsed.height || 480,
+                    timestamp: Date.now()
+                };
+                cognexLastCaptureError = null;
+            } else if (parsed.error) {
+                cognexLastCaptureError = new Error(parsed.error);
+            }
+        } catch (err) {
+            // Ignore partial or non-JSON console prints
+        }
+    });
+
+    cognexProcess.stderr.on('data', (data) => {
+        console.log(`[COGNEX STREAM] ${data.toString().trim()}`);
+    });
+
+    cognexProcess.on('close', (code) => {
+        console.log(`[COGNEX] Stream stopped (code ${code}). Restarting in 5s...`);
+        cognexCaptureLoopStarted = false;
+        cognexProcess = null;
+        setTimeout(startCognexCaptureLoop, 5000);
+    });
+}
+
+async function executeCognexCapture() {
+    startCognexCaptureLoop();
+
+    // Wait up to 5 seconds for the first frame to arrive in the background
+    for (let i = 0; i < 50; i++) {
+        if (cognexLatestFrame) return cognexLatestFrame;
+        if (cognexLastCaptureError) throw cognexLastCaptureError;
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error("Timeout waiting for camera stream initialization.");
+}
+// ==========================================
+
+app.post(
+    '/api/cognex/capture',
+    async (req, res) => {
+        try {
+            startCognexCaptureLoop();
+
+            if (cognexLatestFrame) {
+                return res.status(200).json({
+                    success: true,
+                    image:
+                        cognexLatestFrame.image,
+                    width:
+                        cognexLatestFrame.width,
+                    height:
+                        cognexLatestFrame.height,
+                    timestamp:
+                        cognexLatestFrame.timestamp,
+                    stream: true
+                });
+            }
+
+            const frame =
+                await executeCognexCapture();
+
+            if (!frame) {
+                return res.status(500).json({
+                    success: false,
+                    error:
+                        cognexLastCaptureError?.message ||
+                        'Aucune image Cognex disponible.'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                image:
+                    frame.image,
+                width:
+                    frame.width,
+                height:
+                    frame.height,
+                timestamp:
+                    frame.timestamp,
+                stream: true
+            });
+        } catch (error) {
+            console.error(
+                '[COGNEX] Erreur endpoint:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    error.message ||
+                    'Erreur de communication avec la caméra Cognex.'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/cognex/frame',
+    async (req, res) => {
+        try {
+            startCognexCaptureLoop();
+
+            if (!cognexLatestFrame) {
+                const frame =
+                    await executeCognexCapture();
+
+                if (!frame) {
+                    return res.status(503).json({
+                        success: false,
+                        error:
+                            cognexLastCaptureError?.message ||
+                            'Image Cognex indisponible.'
+                    });
+                }
+            }
+
+            return res.status(200).json({
+                success: true,
+                image:
+                    cognexLatestFrame.image,
+                width:
+                    cognexLatestFrame.width,
+                height:
+                    cognexLatestFrame.height,
+                timestamp:
+                    cognexLatestFrame.timestamp
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                error:
+                    error.message ||
+                    'Erreur de lecture du flux Cognex.'
             });
         }
     }
@@ -918,7 +1183,6 @@ app.get(
 app.post(
     '/api/detect',
     async (req, res) => {
-
         const image =
             req.body?.image;
 
@@ -942,7 +1206,6 @@ app.post(
         let imagePath;
 
         try {
-
             const imageBuffer =
                 Buffer.from(
                     base64,
@@ -1008,27 +1271,25 @@ app.post(
             }
 
             try {
-
                 const {
                     stdout,
                     stderr
-                } = await execFileAsync(
-                    pythonCommand,
-                    [
-                        scriptPath,
-                        imagePath
-                    ],
-                    {
-                        timeout:
-                            120000,
-
-                        maxBuffer:
-                            4 * 1024 * 1024,
-
-                        env:
-                            process.env
-                    }
-                );
+                } =
+                    await execFileAsync(
+                        pythonCommand,
+                        [
+                            scriptPath,
+                            imagePath
+                        ],
+                        {
+                            timeout:
+                                120000,
+                            maxBuffer:
+                                4 * 1024 * 1024,
+                            env:
+                                process.env
+                        }
+                    );
 
                 if (stderr) {
                     console.log(
@@ -1038,19 +1299,23 @@ app.post(
                 }
 
                 const output =
-                    String(stdout || '')
-                        .trim();
+                    String(
+                        stdout || ''
+                    ).trim();
 
                 if (!output) {
                     throw new Error(
-                        'inference.py n\'a retourné aucun résultat JSON.'
+                        "inference.py n'a retourné aucun résultat JSON."
                     );
                 }
 
                 const lines =
                     output
                         .split(/\r?\n/)
-                        .map(line => line.trim())
+                        .map(
+                            line =>
+                                line.trim()
+                        )
                         .filter(Boolean);
 
                 let inference = null;
@@ -1072,12 +1337,9 @@ app.post(
                         ) {
                             inference =
                                 parsed;
-
                             break;
                         }
-
-                    } catch (_) {
-                    }
+                    } catch (_) {}
                 }
 
                 if (!inference) {
@@ -1088,26 +1350,27 @@ app.post(
 
                 const savedHistory =
                     await saveDetectionEvents(
-                        inference.counts
+                        inference.counts,
+                        inference.jig_count ??
+                        inference.jigCount ??
+                        0,
+                        inference.rendement ??
+                        inference.yield ??
+                        inference.taux ??
+                        null
                     );
 
                 return res.json({
                     success: true,
-
                     capture:
                         captureName,
-
                     ...inference,
-
                     historySaved:
                         savedHistory.length > 0,
-
                     historyRecords:
                         savedHistory
                 });
-
             } catch (inferenceError) {
-
                 console.error(
                     'Erreur inference.py:',
                     inferenceError.message
@@ -1133,27 +1396,18 @@ app.post(
 
                 return res.status(500).json({
                     success: false,
-
                     capture:
                         captureName,
-
                     detections: [],
-
                     counts: {},
-
                     jig_detections: [],
-
                     jig_count: 0,
-
                     jig_counts: {},
-
                     message:
                         `Erreur lors de l'exécution des modèles IA : ${inferenceError.message}`
                 });
             }
-
         } catch (error) {
-
             console.error(
                 'Inference error:',
                 error.message
@@ -1161,22 +1415,15 @@ app.post(
 
             return res.status(500).json({
                 success: false,
-
                 capture:
                     'unknown',
-
                 detections: [],
-
                 counts: {},
-
                 jig_detections: [],
-
                 jig_count: 0,
-
                 jig_counts: {},
-
                 message:
-                    'Erreur serveur lors du traitement de l\'image.'
+                    "Erreur serveur lors du traitement de l'image."
             });
         }
     }
@@ -1186,7 +1433,6 @@ app.post(
     '/api/signup',
     (req, res) => {
         try {
-
             const {
                 firstName,
                 lastName,
@@ -1218,7 +1464,7 @@ app.post(
                 return res.status(400).json({
                     success: false,
                     message:
-                        'Format d\'email invalide.'
+                        "Format d'email invalide."
                 });
             }
 
@@ -1251,16 +1497,16 @@ app.post(
             const {
                 userId,
                 loginCode
-            } = createUser(
-                firstName,
-                lastName,
-                email,
-                role,
-                password
-            );
+            } =
+                createUser(
+                    firstName,
+                    lastName,
+                    email,
+                    role,
+                    password
+                );
 
             try {
-
                 appendToExcel(
                     firstName,
                     lastName,
@@ -1270,9 +1516,7 @@ app.post(
                     password,
                     userId
                 );
-
             } catch (excelErr) {
-
                 console.error(
                     'Erreur écriture Excel:',
                     excelErr.message
@@ -1281,17 +1525,12 @@ app.post(
 
             res.status(201).json({
                 success: true,
-
                 message:
                     'Compte créé avec succès.',
-
                 loginCode,
-
                 userId
             });
-
         } catch (error) {
-
             console.error(
                 'Signup error:',
                 error
@@ -1299,7 +1538,6 @@ app.post(
 
             res.status(500).json({
                 success: false,
-
                 message:
                     'Erreur serveur. Veuillez réessayer.'
             });
@@ -1310,9 +1548,7 @@ app.post(
 app.post(
     '/api/login',
     (req, res) => {
-
         try {
-
             const {
                 loginCode,
                 password
@@ -1357,37 +1593,26 @@ app.post(
 
             res.json({
                 success: true,
-
                 message:
                     'Connexion réussie.',
-
                 user: {
-
                     id:
                         user.id,
-
                     firstName:
                         user.first_name,
-
                     lastName:
                         user.last_name,
-
                     email:
                         user.email || '',
-
                     role:
                         user.role,
-
                     loginCode:
                         user.login_code,
-
                     isAdmin:
                         user.is_admin === 1
                 }
             });
-
         } catch (error) {
-
             console.error(
                 'Login error:',
                 error
@@ -1395,7 +1620,6 @@ app.post(
 
             res.status(500).json({
                 success: false,
-
                 message:
                     'Erreur serveur. Veuillez réessayer.'
             });
@@ -1406,9 +1630,7 @@ app.post(
 app.get(
     '/api/users',
     (req, res) => {
-
         try {
-
             const users =
                 getAllUsers();
 
@@ -1416,9 +1638,7 @@ app.get(
                 success: true,
                 users
             });
-
         } catch (error) {
-
             console.error(
                 'Get users error:',
                 error
@@ -1436,9 +1656,7 @@ app.get(
 app.delete(
     '/api/users/:id',
     (req, res) => {
-
         try {
-
             const userId =
                 parseInt(
                     req.params.id,
@@ -1460,9 +1678,7 @@ app.delete(
                 message:
                     'Utilisateur supprimé.'
             });
-
         } catch (error) {
-
             console.error(
                 'Delete user error:',
                 error
@@ -1480,9 +1696,7 @@ app.delete(
 app.put(
     '/api/users/:id/role',
     (req, res) => {
-
         try {
-
             const userId =
                 parseInt(
                     req.params.id,
@@ -1519,9 +1733,7 @@ app.put(
                 message:
                     'Rôle mis à jour.'
             });
-
         } catch (error) {
-
             console.error(
                 'Update role error:',
                 error
@@ -1539,9 +1751,7 @@ app.put(
 app.get(
     '/api/users/:id',
     (req, res) => {
-
         try {
-
             const userId =
                 parseInt(
                     req.params.id,
@@ -1569,34 +1779,24 @@ app.get(
 
             res.json({
                 success: true,
-
                 user: {
-
                     id:
                         user.id,
-
                     firstName:
                         user.first_name,
-
                     lastName:
                         user.last_name,
-
                     email:
                         user.email,
-
                     role:
                         user.role,
-
                     loginCode:
                         user.login_code,
-
                     isAdmin:
                         user.is_admin === 1
                 }
             });
-
         } catch (error) {
-
             console.error(
                 'Get user error:',
                 error
@@ -1614,9 +1814,7 @@ app.get(
 app.put(
     '/api/users/change-password',
     (req, res) => {
-
         try {
-
             const {
                 userId,
                 currentPassword,
@@ -1696,9 +1894,7 @@ app.put(
                 message:
                     'Mot de passe modifié avec succès.'
             });
-
         } catch (error) {
-
             console.error(
                 'Change password error:',
                 error
@@ -1716,9 +1912,7 @@ app.put(
 app.put(
     '/api/users/profile',
     (req, res) => {
-
         try {
-
             const {
                 id,
                 firstName,
@@ -1766,7 +1960,7 @@ app.put(
                 return res.status(400).json({
                     success: false,
                     message:
-                        'Format d\'email invalide.'
+                        "Format d'email invalide."
                 });
             }
 
@@ -1783,9 +1977,7 @@ app.put(
                 message:
                     'Profil mis à jour avec succès.'
             });
-
         } catch (error) {
-
             console.error(
                 'Update profile error:',
                 error
@@ -1803,9 +1995,7 @@ app.put(
 app.post(
     '/api/alert-empty-balancelles',
     async (req, res) => {
-
         try {
-
             const {
                 produit,
                 quantite,
@@ -1816,38 +2006,34 @@ app.post(
             const transporter =
                 nodemailer.createTransport({
                     service: 'gmail',
-
                     auth: {
                         user:
                             process.env.VALEO_ALERT_EMAIL,
-
                         pass:
                             process.env.VALEO_ALERT_PASSWORD
                     }
                 });
 
             const mailOptions = {
-
                 from:
                     process.env.VALEO_ALERT_EMAIL ||
                     'alerte@valeo.local',
-
                 to:
                     'sameher.ajimi@enis.tn',
-
                 subject:
                     `Alerte Valeo : Rendement ${rendement ?? '?'}% < 90% - ${produit || 'Produit inconnu'}`,
-
                 text:
                     `Alerte automatique Valeo.
 
 Produit : ${produit || 'N/A'}
+
 Dernière quantité : ${quantite ?? 0}
+
 Rendement : ${rendement ?? '?'}%
+
 Heure : ${timestamp || new Date().toLocaleString('fr-FR')}
 
 Le rendement est inférieur à 90%.`,
-
                 html:
                     `<p>Alerte automatique <strong>Valeo</strong>.</p>
 <ul>
@@ -1868,9 +2054,7 @@ Le rendement est inférieur à 90%.`,
                 message:
                     'Alerte email envoyée.'
             });
-
         } catch (error) {
-
             console.error(
                 'Erreur envoi alerte email:',
                 error
@@ -1879,7 +2063,7 @@ Le rendement est inférieur à 90%.`,
             res.status(500).json({
                 success: false,
                 message:
-                    'Impossible d\'envoyer l\'alerte email.'
+                    "Impossible d'envoyer l'alerte email."
             });
         }
     }
@@ -1888,9 +2072,7 @@ Le rendement est inférieur à 90%.`,
 app.post(
     '/api/generate-xml',
     async (req, res) => {
-
         try {
-
             const {
                 ProductNo,
                 EventDateTime,
@@ -1939,19 +2121,16 @@ app.post(
                 }
             );
 
-            const now =
-                new Date();
+            const now = new Date();
 
             const datePart = [
                 now.getFullYear(),
-
                 String(
                     now.getMonth() + 1
                 ).padStart(
                     2,
                     '0'
                 ),
-
                 String(
                     now.getDate()
                 ).padStart(
@@ -1967,14 +2146,12 @@ app.post(
                     2,
                     '0'
                 ),
-
                 String(
                     now.getMinutes()
                 ).padStart(
                     2,
                     '0'
                 ),
-
                 String(
                     now.getSeconds()
                 ).padStart(
@@ -2018,9 +2195,7 @@ app.post(
                     String(
                         ProductNo
                     ).trim(),
-
                     formattedDateTime,
-
                     quantityTotal
                 );
 
@@ -2035,60 +2210,31 @@ app.post(
                 filePath
             );
 
-            console.log(
-                'ProductNo :',
-                String(
-                    ProductNo
-                ).trim()
-            );
-
-            console.log(
-                'EventDateTime :',
-                formattedDateTime
-            );
-
-            console.log(
-                'Quantity :',
-                quantityTotal
-            );
-
-            return res.json({
-
-                success:
-                    true,
-
+            res.json({
+                success: true,
                 message:
                     'Fichier XML généré avec succès.',
-
-                filename:
-                    filename,
-
+                filename,
                 path:
                     filePath,
-
                 data: {
-
                     ProductNo:
                         String(
                             ProductNo
                         ).trim(),
-
                     EventDateTime:
                         formattedDateTime,
-
                     Quantity:
                         quantityTotal
                 }
             });
-
         } catch (error) {
-
             console.error(
                 'Erreur génération XML :',
                 error
             );
 
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
                 error:
                     'Impossible de générer le fichier XML.'
@@ -2100,7 +2246,6 @@ app.post(
 app.get(
     '*',
     (req, res) => {
-
         res.sendFile(
             path.join(
                 __dirname,
@@ -2112,9 +2257,7 @@ app.get(
 );
 
 async function startServer() {
-
     try {
-
         await fs.mkdir(
             XML_DIRECTORY,
             {
@@ -2126,25 +2269,20 @@ async function startServer() {
             'Dossier XML :',
             XML_DIRECTORY
         );
-
     } catch (error) {
-
         console.error(
-            'Erreur création dossier XML :',
+            'Erreur création dossier XML:',
             error.message
         );
     }
 
     try {
-
         await getDatabase();
 
         console.log(
             'Base de données initialisée'
         );
-
     } catch (error) {
-
         console.error(
             'Erreur base de données:',
             error.message
@@ -2153,13 +2291,26 @@ async function startServer() {
 
     app.listen(
         PORT,
+        '0.0.0.0',
         () => {
-
             console.log(
                 `Serveur Valeo démarré sur http://localhost:${PORT}`
+            );
+
+            console.log(
+                `Python utilisé : ${pythonCommand}`
+            );
+
+            console.log(
+                `Plateforme : ${process.platform}`
+            );
+
+            console.log(
+                `Cognex Python : ${path.join(__dirname, 'cognex_camera.py')}`
             );
         }
     );
 }
 
 startServer();
+

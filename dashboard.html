@@ -1,18 +1,25 @@
 <!DOCTYPE html>
+
 <html lang="fr">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>VALEO - Dashboard</title>
 
 <!-- Google Fonts & FontAwesome -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
     :root {
         --valeo-lime: #B9FF00;
         --valeo-blue: #1F404E;
@@ -261,6 +268,7 @@
     }
 
     /* PRODUIT ACTUEL */
+
     .current-product-panel {
         background: linear-gradient(135deg, rgba(185,255,0,0.06), rgba(31,64,78,0.10));
         border: 1px solid rgba(185,255,0,0.18);
@@ -572,6 +580,18 @@
         z-index: 2;
     }
 
+    /* PREVIEW COGNEX */
+
+    .cognex-photo-preview {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: none;
+        z-index: 2;
+    }
+
     .camera-crosshair {
         width: 40px;
         height: 40px;
@@ -757,6 +777,20 @@
         border-color: rgba(185, 255, 0, 0.2);
     }
 
+    /* BOUTON COGNEX */
+
+    .ctrl-btn-cognex {
+        background: rgba(31, 64, 78, 0.35);
+        color: #7dd3fc;
+        border-color: rgba(125, 211, 252, 0.25);
+    }
+
+    .ctrl-btn-cognex:hover {
+        background: rgba(31, 64, 78, 0.55);
+        border-color: rgba(125, 211, 252, 0.5);
+        transform: translateY(-1px);
+    }
+
     .alert-panel {
         display: none;
         background: rgba(255, 68, 68, 0.08);
@@ -842,6 +876,7 @@
     }
 
     @media (max-width: 1200px) {
+
         .kpi-grid {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -852,6 +887,7 @@
     }
 
     @media (max-width: 768px) {
+
         .kpi-grid {
             grid-template-columns: 1fr;
         }
@@ -871,22 +907,31 @@
             width: 100%;
         }
     }
+
 </style>
+
 </head>
 
 <body>
 
 <div class="background"></div>
+
 <div class="grid"></div>
+
 <div class="glow"></div>
 
 <header>
+
     <div class="header-title">
+
         <img src="images%20(1).png" alt="Valeo">
+
         <h1>VALEO</h1>
+
     </div>
 
     <nav class="header-nav" id="mainNav">
+
         <a href="dashboard.html" class="nav-link active">
             <i class="fa-solid fa-gauge-high"></i> Dashboard
         </a>
@@ -900,47 +945,71 @@
         </a>
 
         <a href="admin.html" class="nav-link" id="navAdmin" style="display:none;">
-                <i class="fa-solid fa-shield-halved"></i> Admin
+            <i class="fa-solid fa-shield-halved"></i> Admin
         </a>
+
     </nav>
 
     <div class="header-user">
 
         <span style="color: var(--muted); font-size: 0.85rem; display:flex; align-items:center; gap:0.5rem;">
+
             <i class="fa-regular fa-calendar"></i>
+
             <span id="current-date">--</span>
 
             <span style="opacity:0.3;">|</span>
 
             <i class="fa-regular fa-clock"></i>
+
             <span id="current-time">--:--:--</span>
+
         </span>
 
         <span class="user-email" id="userDisplay">Utilisateur</span>
-        <!-- Camera live indicator (shared across all pages) -->
-        <span id="global-cam-indicator" style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.8rem;padding-left:1rem;">
-            <i class="fa-solid fa-circle" style="color:#ff4444;font-size:8px;"></i>
+
+        <!-- Camera live indicator -->
+
+        <span id="global-cam-indicator"
+              style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.8rem;padding-left:1rem;">
+
+            <i class="fa-solid fa-circle"
+               style="color:#ff4444;font-size:8px;"></i>
+
             <span id="globalCamText">Caméra OFF</span>
+
         </span>
 
         <button class="account-btn" id="accountBtn" title="Mon compte">
+
             <i class="fa-regular fa-circle-user"></i>
+
         </button>
 
         <div class="account-dropdown" id="accountDropdown">
 
             <div class="dropdown-userinfo">
+
                 <div class="name" id="dropdownName">Utilisateur</div>
+
                 <div class="role" id="dropdownRole">Rôle</div>
-                <div class="role" id="dropdownEmail" style="color:var(--muted);font-size:0.7rem;margin-top:2px;">
+
+                <div class="role"
+                     id="dropdownEmail"
+                     style="color:var(--muted);font-size:0.7rem;margin-top:2px;">
+
                     email
+
                 </div>
+
             </div>
 
             <div class="dropdown-divider"></div>
 
             <a href="settings.html" class="dropdown-item">
+
                 <i class="fa-solid fa-gear"></i> Paramètres
+
             </a>
 
             <div class="dropdown-divider"></div>
@@ -953,98 +1022,190 @@
                    style="color:var(--accent-red, #ff4444);"></i>
 
                 Déconnexion
+
             </div>
 
         </div>
+
     </div>
+
 </header>
 
 
 <div class="main-content">
 
     <!-- PRODUIT ACTUEL -->
+
     <div class="current-product-panel">
+
         <div class="panel-header">
+
             <div class="panel-title">
-                <i class="fa-solid fa-box-open" style="color:var(--valeo-lime);"></i>
+
+                <i class="fa-solid fa-box-open"
+                   style="color:var(--valeo-lime);"></i>
+
                 Produit actuel
+
             </div>
-            <span id="current-product-status" class="badge badge-amber">En attente</span>
+
+            <span id="current-product-status"
+                  class="badge badge-amber">
+
+                En attente
+
+            </span>
+
         </div>
 
         <div class="current-product-body">
+
             <div>
+
                 <div style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:.06em;">
+
                     Dernier produit détecté
+
                 </div>
 
-                <div id="current-product-name" class="current-product-name">
+                <div id="current-product-name"
+                     class="current-product-name">
+
                     —
+
                 </div>
+
             </div>
 
             <div class="current-product-meta">
 
                 <span>
+
                     Famille :
-                    <strong id="current-product-family" class="current-product-value">
+
+                    <strong id="current-product-family"
+                            class="current-product-value">
+
                         —
+
                     </strong>
+
                 </span>
 
             </div>
+
         </div>
+
     </div>
 
 
     <!-- KPI -->
-    <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+
+    <div class="kpi-grid"
+         style="grid-template-columns: repeat(3, 1fr); gap: 2rem;">
 
         <div class="kpi-card">
+
             <div>
-                <div class="kpi-label">Quantité Totale (en kits)</div>
-                <div class="kpi-value lime" id="val-total-target">0</div>
+
+                <div class="kpi-label">
+                    Quantité Totale (en kits)
+                </div>
+
+                <div class="kpi-value lime"
+                     id="val-total-target">
+
+                    0
+
+                </div>
+
             </div>
+
         </div>
 
         <div class="kpi-card">
+
             <div>
-                <div class="kpi-label">Rendement Moyen</div>
-                <div class="kpi-value lime" id="val-yield">0%</div>
+
+                <div class="kpi-label">
+                    Rendement Moyen
+                </div>
+
+                <div class="kpi-value lime"
+                     id="val-yield">
+
+                    0%
+
+                </div>
+
             </div>
+
         </div>
 
         <div class="kpi-card">
+
             <div>
-                <div class="kpi-label">TRP</div>
-                <div class="kpi-value lime" id="val-trp">--</div>
+
+                <div class="kpi-label">
+                    TRP
+                </div>
+
+                <div class="kpi-value lime"
+                     id="val-trp">
+
+                    --
+
+                </div>
+
             </div>
+
         </div>
 
     </div>
 
+
     <div class="alert-panel" id="low-yield-alert">
+
         <div class="alert-icon">
+
             <i class="fa-solid fa-triangle-exclamation"></i>
+
         </div>
+
         <div class="alert-content">
-            <div class="alert-title">Alerte : Rendement critique</div>
-            <div class="alert-message" id="low-yield-message">Le rendement est inférieur à 90%.</div>
+
+            <div class="alert-title">
+                Alerte : Rendement critique
+            </div>
+
+            <div class="alert-message"
+                 id="low-yield-message">
+
+                Le rendement est inférieur à 90%.
+
+            </div>
+
         </div>
+
     </div>
 
 
     <!-- MAIN COLUMNS -->
+
     <div class="layout-columns">
 
         <!-- HISTORY -->
+
         <div class="panel">
 
             <div class="panel-header">
 
                 <div class="panel-title">
+
                     <i class="fa-solid fa-list-check"></i>
+
                     Historique des Mesures
+
                 </div>
 
             </div>
@@ -1058,11 +1219,17 @@
                         <thead>
 
                             <tr>
+
                                 <th>ID / Date &amp; Heure</th>
+
                                 <th>Produit</th>
+
                                 <th>Jigs Totales</th>
+
                                 <th>Jigs Détectées</th>
+
                                 <th>Rendement</th>
+
                             </tr>
 
                         </thead>
@@ -1079,6 +1246,7 @@
 
 
         <!-- CAMERA -->
+
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
 
             <div class="panel">
@@ -1086,13 +1254,18 @@
                 <div class="panel-header">
 
                     <div class="panel-title">
+
                         <i class="fa-solid fa-camera"></i>
+
                         Flux Détection
+
                     </div>
 
                     <span id="cam-simulation-badge"
                           class="badge badge-amber">
+
                         Caméra inactive
+
                     </span>
 
                 </div>
@@ -1100,7 +1273,10 @@
 
                 <div class="panel-body">
 
-                    <div class="camera-view" id="camera-view-box">
+                    <div class="camera-view"
+                         id="camera-view-box">
+
+                        <!-- CAMÉRA PC -->
 
                         <video id="camera-video"
                                class="camera-video"
@@ -1109,12 +1285,25 @@
                                playsinline>
                         </video>
 
+
+                        <!-- IMAGE IMPORTÉE -->
+
                         <img id="imported-photo-preview"
-                             style="display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2;">
+                             class="imported-photo-preview"
+                             alt="Image importée">
+
+
+                        <!-- IMAGE COGNEX -->
+
+                        <img id="cognex-photo-preview"
+                             class="cognex-photo-preview"
+                             alt="Image Cognex">
+
 
                         <div class="camera-grid"></div>
 
                         <div class="camera-crosshair"></div>
+
 
                         <div id="no-signal-overlay"
                              class="no-signal-overlay">
@@ -1124,14 +1313,18 @@
                             </i>
 
                             <span style="color: var(--muted); font-family: monospace; font-size: 0.875rem;">
+
                                 CAMÉRA INACTIVE
+
                             </span>
 
                         </div>
 
+
                         <div class="detection-boxes-container"
                              id="detection-overlay">
                         </div>
+
 
                         <div class="camera-overlay">
 
@@ -1142,13 +1335,17 @@
                                 </span>
 
                                 <span id="cam-rec-indicator">
+
                                     <i class="fa-solid fa-circle"
                                        style="color: var(--accent-red); font-size: 8px;">
                                     </i>
+
                                     LIVE
+
                                 </span>
 
                             </div>
+
 
                             <div class="camera-footer">
 
@@ -1159,7 +1356,9 @@
                                              background: rgba(0,0,0,0.6);
                                              padding: 4px 8px;
                                              border-radius: 4px;">
+
                                     NO SIGNAL
+
                                 </span>
 
                             </div>
@@ -1168,15 +1367,28 @@
 
                     </div>
 
-                    <div style="display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap;">
 
-                        <button class="ctrl-btn ctrl-btn-lime"
+                    <!-- SOURCE IMAGE -->
+
+                    <div style="
+                        display: flex;
+                        gap: 0.75rem;
+                        margin-top: 1rem;
+                        flex-wrap: wrap;
+                    ">
+
+                        <!-- IMPORT IMAGE -->
+
+                        <button id="import-image-btn"
+                                class="ctrl-btn ctrl-btn-lime"
                                 onclick="document.getElementById('import-photo-input').click()">
 
                             <i class="fa-solid fa-file-import"></i>
+
                             Importer une photo
 
                         </button>
+
 
                         <input type="file"
                                id="import-photo-input"
@@ -1184,13 +1396,66 @@
                                style="display: none;"
                                onchange="importPhoto(event)">
 
+
+                        <!-- CAMÉRA PC -->
+
+                        <button id="pc-camera-btn"
+                                class="ctrl-btn ctrl-btn-green"
+                                onclick="toggleCamera(true)">
+
+                            <i class="fa-solid fa-camera"></i>
+
+                            Caméra PC
+
+                        </button>
+
+
+                        <!-- COGNEX -->
+
+                        <button id="cognex-camera-btn"
+                                class="ctrl-btn ctrl-btn-cognex"
+                                onclick="captureCognex()">
+
+                            <i class="fa-solid fa-industry"></i>
+
+                            Cognex
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- COGNEX STATUS -->
+
+                    <div id="cognex-status-panel"
+                         style="
+                            display: none;
+                            margin-top: 0.75rem;
+                            padding: 0.7rem 0.9rem;
+                            border: 1px solid rgba(125, 211, 252, 0.2);
+                            border-radius: 8px;
+                            background: rgba(31, 64, 78, 0.18);
+                            color: var(--muted);
+                            font-family: monospace;
+                            font-size: 0.75rem;
+                         ">
+
+                        <i class="fa-solid fa-circle"
+                           style="color: var(--accent-red); font-size: 7px;"></i>
+
+                        <span id="cognex-status-text">
+                            Cognex déconnectée
+                        </span>
+
                     </div>
 
                 </div>
 
 
                 <!-- PRODUCT INFO -->
-                <div class="sim-info-panel" style="margin-top: 1rem;">
+
+                <div class="sim-info-panel"
+                     style="margin-top: 1rem;">
 
                     <div class="sim-info-grid">
 
@@ -1200,7 +1465,9 @@
 
                         <span class="sim-info-val"
                               id="info-product-name">
+
                             -
+
                         </span>
 
                     </div>
@@ -1215,17 +1482,23 @@
 
 
     <!-- DETECTION CONTROLS -->
+
     <div class="panel">
 
         <div class="panel-header">
 
             <div class="panel-title">
+
                 <i class="fa-solid fa-sliders"></i>
+
                 Contrôles de Détection
+
             </div>
 
             <span class="badge badge-lime">
+
                 IA Roboflow · seuil 85%
+
             </span>
 
         </div>
@@ -1236,6 +1509,7 @@
             <div class="sim-controls">
 
                 <!-- SENSOR -->
+
                 <div class="sim-control-group">
 
                     <span class="sim-info-label">
@@ -1247,6 +1521,7 @@
                             onclick="triggerSensor()">
 
                         <i class="fa-solid fa-radar"></i>
+
                         Déclencher la détection
 
                     </button>
@@ -1255,6 +1530,7 @@
 
 
                 <!-- CAMERA -->
+
                 <div class="sim-control-group">
 
                     <span class="sim-info-label">
@@ -1265,6 +1541,7 @@
                             onclick="toggleCamera(true)">
 
                         <i class="fa-solid fa-camera"></i>
+
                         Activer
 
                     </button>
@@ -1273,7 +1550,29 @@
                             onclick="toggleCamera(false)">
 
                         <i class="fa-solid fa-camera-slash"></i>
+
                         Désactiver
+
+                    </button>
+
+                </div>
+
+
+                <!-- COGNEX -->
+
+                <div class="sim-control-group">
+
+                    <span class="sim-info-label">
+                        Cognex :
+                    </span>
+
+                    <button id="cognex-capture-btn"
+                            class="ctrl-btn ctrl-btn-cognex"
+                            onclick="captureCognex()">
+
+                        <i class="fa-solid fa-camera"></i>
+
+                        Capturer
 
                     </button>
 
@@ -1295,21 +1594,34 @@
     </span>
 
     <span>
+
         Version 1.0.0 |
-        <a href="#">Support</a>
+
+        <a href="#">
+            Support
+        </a>
+
     </span>
 
 </footer>
-
-
 <script>
+
+    /* =========================================================
+       ÉTAT GLOBAL DU DASHBOARD
+       ========================================================= */
 
     let readings = [];
     let chartInstance = null;
 
     let cameraActive = false;
+    let cognexActive = false;
     let detectionInProgress = false;
+
     let importedImageData = null;
+    let cognexImageData = null;
+    let cognexStreamTimer = null;
+    let cognexFrameBusy = false;
+
     let analysisTimer = null;
     let isAnalyzing = false;
     let currentProductName = null;
@@ -1319,16 +1631,38 @@
     let selectedCameraId = '';
 
     const ANALYSIS_INTERVAL_MS = 10000;
+    const COGNEX_FRAME_INTERVAL_MS = 250;
     const ANALYSIS_TIMEOUT_MS = 10000;
 
-    const DASHBOARD_STATE_KEY = 'valeo_dashboard_state_v2';
+    const DASHBOARD_STATE_KEY =
+        'valeo_dashboard_state_v2';
+
+
+    /* =========================================================
+       ÉTAT IMAGE COURANTE
+       ========================================================= */
+
+    let currentImageSource = 'none';
+    /*
+        none
+        imported
+        pc
+        cognex
+    */
+
+
+    /* =========================================================
+       ÉTAT DASHBOARD
+       ========================================================= */
 
     function getStoredDashboardState() {
 
         try {
 
             return JSON.parse(
-                localStorage.getItem(DASHBOARD_STATE_KEY) || '{}'
+                localStorage.getItem(
+                    DASHBOARD_STATE_KEY
+                ) || '{}'
             );
 
         } catch (e) {
@@ -1344,9 +1678,8 @@
 
     }
 
-    function getImageDimensions(
-        dataUrl
-    ) {
+
+    function getImageDimensions(dataUrl) {
 
         return new Promise(
             (
@@ -1360,12 +1693,13 @@
                 img.onload =
                     function() {
 
-                        resolve(
-                            {
-                                width: img.naturalWidth,
-                                height: img.naturalHeight
-                            }
-                        );
+                        resolve({
+                            width:
+                                img.naturalWidth,
+
+                            height:
+                                img.naturalHeight
+                        });
 
                     };
 
@@ -1380,16 +1714,22 @@
 
     }
 
+
     function clearDetectionBoxes() {
 
         const overlay =
-            document.getElementById('detection-overlay');
+            document.getElementById(
+                'detection-overlay'
+            );
 
         if (overlay) {
+
             overlay.innerHTML = '';
+
         }
 
     }
+
 
     function saveDashboardState() {
 
@@ -1454,6 +1794,7 @@
 
     }
 
+
     function restoreDashboardState() {
 
         const state =
@@ -1463,7 +1804,9 @@
             !state ||
             typeof state !== 'object'
         ) {
+
             return false;
+
         }
 
         readings =
@@ -1569,6 +1912,11 @@
 
     }
 
+
+    /* =========================================================
+       AUTHENTIFICATION
+       ========================================================= */
+
     function restoreAuthFromLocalStorage() {
 
         const keys = [
@@ -1603,6 +1951,7 @@
 
     }
 
+
     function mirrorAuthToLocalStorage() {
 
         [
@@ -1633,230 +1982,210 @@
 
     }
 
+
+    /* =========================================================
+       PRODUITS
+       ========================================================= */
+
     let lastFrameSize = {
         width: 0,
         height: 0
     };
 
+
     const productsDatabase = {
 
-        'SWEET 400':
-            {
-                jigsTotal: 18,
-                famille: 'SWEET 400',
-                kits: 11,
-                cycleTime: 1.9
-            },
+        'SWEET 400': {
+            jigsTotal: 18,
+            famille: 'SWEET 400',
+            kits: 11,
+            cycleTime: 1.9
+        },
 
-        '9B':
-            {
-                jigsTotal: 15,
-                famille: 'X52 PUSH BAR',
-                kits: 3,
-                cycleTime: 0.19
-            },
+        '9B': {
+            jigsTotal: 15,
+            famille: 'X52 PUSH BAR',
+            kits: 3,
+            cycleTime: 0.19
+        },
 
-        'XDD/7B':
-            {
-                jigsTotal: 15,
-                famille: 'X52 PUSH BAR',
-                kits: 4,
-                cycleTime: 0.95
-            },
+        'XDD/7B': {
+            jigsTotal: 15,
+            famille: 'X52 PUSH BAR',
+            kits: 4,
+            cycleTime: 0.95
+        },
 
-        '8B':
-            {
-                jigsTotal: 15,
-                famille: 'X52 PUSH BAR',
-                kits: 20,
-                cycleTime: 1.27
-            },
+        '8B': {
+            jigsTotal: 15,
+            famille: 'X52 PUSH BAR',
+            kits: 20,
+            cycleTime: 1.27
+        },
 
-        'FRAME':
-            {
-                jigsTotal: 15,
-                famille: 'BEL',
-                kits: 3,
-                cycleTime: 1.27
-            },
+        'FRAME': {
+            jigsTotal: 15,
+            famille: 'BEL',
+            kits: 3,
+            cycleTime: 1.27
+        },
 
-        'MATE':
-            {
-                jigsTotal: 15,
-                famille: 'BEL',
-                kits: 7,
-                cycleTime: 0.09
-            },
+        'MATE': {
+            jigsTotal: 15,
+            famille: 'BEL',
+            kits: 7,
+            cycleTime: 0.09
+        },
 
-        'CMFB PUSH':
-            {
-                jigsTotal: 12,
-                famille: 'CMFB-P',
-                kits: 3,
-                cycleTime: 1.58
-            },
+        'CMFB PUSH': {
+            jigsTotal: 12,
+            famille: 'CMFB-P',
+            kits: 3,
+            cycleTime: 1.58
+        },
 
-        'DECOPART':
-            {
-                jigsTotal: 15,
-                famille: 'CMFB-P',
-                kits: 3,
-                cycleTime: 1.26
-            },
+        'DECOPART': {
+            jigsTotal: 15,
+            famille: 'CMFB-P',
+            kits: 3,
+            cycleTime: 1.26
+        },
 
-        'D2CORATIVE FASCIA':
-            {
-                jigsTotal: 18,
-                famille: 'OV512',
-                kits: 1,
-                cycleTime: 3.56
-            },
+        'D2CORATIVE FASCIA': {
+            jigsTotal: 18,
+            famille: 'OV512',
+            kits: 1,
+            cycleTime: 3.56
+        },
 
-        'ADAS':
-            {
-                jigsTotal: 15,
-                famille: 'OV512',
-                kits: 8,
-                cycleTime: 0.48
-            },
+        'ADAS': {
+            jigsTotal: 15,
+            famille: 'OV512',
+            kits: 8,
+            cycleTime: 0.48
+        },
 
-        'CAPACITIVE PLATE':
-            {
-                jigsTotal: 15,
-                famille: 'OV512',
-                kits: 4,
-                cycleTime: 0.95
-            },
+        'CAPACITIVE PLATE': {
+            jigsTotal: 15,
+            famille: 'OV512',
+            kits: 4,
+            cycleTime: 0.95
+        },
 
-        'TOGGLE':
-            {
-                jigsTotal: 15,
-                famille: 'OV512',
-                kits: 3,
-                cycleTime: 1.26
-            },
+        'TOGGLE': {
+            jigsTotal: 15,
+            famille: 'OV512',
+            kits: 3,
+            cycleTime: 1.26
+        },
 
-        'BEZEL':
-            {
-                jigsTotal: 10,
-                famille: 'OV512',
-                kits: 4,
-                cycleTime: 1.43
-            },
+        'BEZEL': {
+            jigsTotal: 10,
+            famille: 'OV512',
+            kits: 4,
+            cycleTime: 1.43
+        },
 
-        'CAPACITIVE DUMMY':
-            {
-                jigsTotal: 15,
-                famille: 'OV512',
-                kits: 4,
-                cycleTime: 0.95
-            },
+        'CAPACITIVE DUMMY': {
+            jigsTotal: 15,
+            famille: 'OV512',
+            kits: 4,
+            cycleTime: 0.95
+        },
 
-        'ON/OFF':
-            {
-                jigsTotal: 15,
-                famille: 'OV512',
-                kits: 20,
-                cycleTime: 0.13
-            },
+        'ON/OFF': {
+            jigsTotal: 15,
+            famille: 'OV512',
+            kits: 20,
+            cycleTime: 0.13
+        },
 
-        'HAZARD = Warning':
-            {
-                jigsTotal: 18,
-                famille: 'P674',
-                kits: 12,
-                cycleTime: 0.31
-            },
+        'HAZARD = Warning': {
+            jigsTotal: 18,
+            famille: 'P674',
+            kits: 12,
+            cycleTime: 0.31
+        },
 
-        'DECOR CAPA PUSH BLOCK':
-            {
-                jigsTotal: 10,
-                famille: 'P674',
-                kits: 4,
-                cycleTime: 1.41
-            },
+        'DECOR CAPA PUSH BLOCK': {
+            jigsTotal: 10,
+            famille: 'P674',
+            kits: 4,
+            cycleTime: 1.41
+        },
 
-        'CAP CAPACITIVE':
-            {
-                jigsTotal: 10,
-                famille: 'P674',
-                kits: 4,
-                cycleTime: 1.41
-            },
+        'CAP CAPACITIVE': {
+            jigsTotal: 10,
+            famille: 'P674',
+            kits: 4,
+            cycleTime: 1.41
+        },
 
-        'CAP CAPA':
-            {
-                jigsTotal: 10,
-                famille: 'P674',
-                kits: 4,
-                cycleTime: 1.41
-            },
+        'CAP CAPA': {
+            jigsTotal: 10,
+            famille: 'P674',
+            kits: 4,
+            cycleTime: 1.41
+        },
 
-        'TCP':
-            {
-                jigsTotal: 10,
-                famille: 'P674',
-                kits: 6,
-                cycleTime: 3.69
-            },
+        'TCP': {
+            jigsTotal: 10,
+            famille: 'P674',
+            kits: 6,
+            cycleTime: 3.69
+        },
 
-        'DECOR FASCIA MAIN LHD':
-            {
-                jigsTotal: 9,
-                famille: 'P674',
-                kits: 1,
-                cycleTime: 7.06
-            },
+        'DECOR FASCIA MAIN LHD': {
+            jigsTotal: 9,
+            famille: 'P674',
+            kits: 1,
+            cycleTime: 7.06
+        },
 
-        'DFM':
-            {
-                jigsTotal: 9,
-                famille: 'P674',
-                kits: 1,
-                cycleTime: 7.06
-            },
+        'DFM': {
+            jigsTotal: 9,
+            famille: 'P674',
+            kits: 1,
+            cycleTime: 7.06
+        },
 
-        'E-TOGGLE':
-            {
-                jigsTotal: 15,
-                famille: 'E-TOGGLE',
-                kits: 12,
-                cycleTime: 0.33
-            },
+        'E-TOGGLE': {
+            jigsTotal: 15,
+            famille: 'E-TOGGLE',
+            kits: 12,
+            cycleTime: 0.33
+        },
 
-        'LJC':
-            {
-                jigsTotal: 15,
-                famille: 'LJC',
-                kits: 4,
-                cycleTime: 1.72
-            },
+        'LJC': {
+            jigsTotal: 15,
+            famille: 'LJC',
+            kits: 4,
+            cycleTime: 1.72
+        },
 
-        'X52 SQUARE':
-            {
-                jigsTotal: 15,
-                famille: 'X52 SQUARE',
-                kits: 2,
-                cycleTime: 1.72
-            },
+        'X52 SQUARE': {
+            jigsTotal: 15,
+            famille: 'X52 SQUARE',
+            kits: 2,
+            cycleTime: 1.72
+        },
 
-        'MFL':
-            {
-                jigsTotal: 15,
-                famille: 'MFL',
-                kits: 4,
-                cycleTime: 0
-            },
+        'MFL': {
+            jigsTotal: 15,
+            famille: 'MFL',
+            kits: 4,
+            cycleTime: 0
+        },
 
-        'HMI':
-            {
-                jigsTotal: 15,
-                famille: 'HMI',
-                kits: 4,
-                cycleTime: 0
-            }
+        'HMI': {
+            jigsTotal: 15,
+            famille: 'HMI',
+            kits: 4,
+            cycleTime: 0
+        }
 
     };
+
 
     function getProductInfo(productName) {
 
@@ -1878,7 +2207,9 @@
                 ];
 
             if (capCapa) {
+
                 return capCapa;
+
             }
 
         }
@@ -1893,16 +2224,14 @@
             const dbKey =
                 String(
                     key || ''
-                ).trim().toUpperCase();
+                )
+                .trim()
+                .toUpperCase();
 
             if (
                 dbKey === normalized ||
-                normalized.includes(
-                    dbKey
-                ) ||
-                dbKey.includes(
-                    normalized
-                )
+                normalized.includes(dbKey) ||
+                dbKey.includes(normalized)
             ) {
 
                 return value;
@@ -1922,6 +2251,11 @@
         };
 
     }
+
+
+    /* =========================================================
+       CALCUL TRP
+       ========================================================= */
 
     function parseReadingTimestamp(reading) {
 
@@ -1960,14 +2294,10 @@
         }
 
         const dateParts =
-            dateStr.split(
-                '/'
-            );
+            dateStr.split('/');
 
         const timeParts =
-            timeStr.split(
-                ':'
-            );
+            timeStr.split(':');
 
         if (
             dateParts.length < 3
@@ -1994,9 +2324,7 @@
             `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 
         const ts =
-            Date.parse(
-                iso
-            );
+            Date.parse(iso);
 
         if (Number.isNaN(ts)) {
             return null;
@@ -2005,6 +2333,7 @@
         return ts;
 
     }
+
 
     function calculateTRP() {
 
@@ -2054,8 +2383,11 @@
 
                 const detectedKits =
                     Number(
-                        r.quantite || r.jigs_detectees || 0
-                    ) * kitsPerJig;
+                        r.quantite ||
+                        r.jigs_detectees ||
+                        0
+                    ) *
+                    kitsPerJig;
 
                 productGroups[
                     product
@@ -2068,11 +2400,13 @@
                     );
 
                 if (ts !== null) {
+
                     productGroups[
                         product
                     ].timestamps.push(
                         ts
                     );
+
                 }
 
             }
@@ -2140,9 +2474,13 @@
 
             const trp =
                 (
-                    (data.totalKits * cycleTime) /
+                    (
+                        data.totalKits *
+                        cycleTime
+                    ) /
                     durationSeconds
-                ) * 100;
+                ) *
+                100;
 
             const clampedTRP =
                 Math.min(
@@ -2157,17 +2495,23 @@
                 bestTRP === null ||
                 clampedTRP > bestTRP
             ) {
+
                 bestTRP =
                     clampedTRP;
+
                 bestProduct =
                     product;
+
                 bestDetails = {
-                    product: product,
-                    cycleTime: cycleTime,
-                    durationSeconds: durationSeconds,
-                    totalKits: data.totalKits,
-                    trp: clampedTRP
+                    product,
+                    cycleTime,
+                    durationSeconds,
+                    totalKits:
+                        data.totalKits,
+                    trp:
+                        clampedTRP
                 };
+
             }
 
         }
@@ -2179,14 +2523,26 @@
         }
 
         return {
-            trp: Math.round(
-                bestTRP
-            ),
-            product: bestProduct,
-            details: bestDetails
+
+            trp:
+                Math.round(
+                    bestTRP
+                ),
+
+            product:
+                bestProduct,
+
+            details:
+                bestDetails
+
         };
 
     }
+
+
+    /* =========================================================
+       VARIABLES PRODUCTION
+       ========================================================= */
 
     let scanCounter = 0;
     let sameProductDetectionCount = 0;
@@ -2194,6 +2550,11 @@
     window.productTotals = {};
     window.baseReference = {};
     window.baseReferenceIndex = {};
+
+
+    /* =========================================================
+       NORMALISATION PRODUIT
+       ========================================================= */
 
     function normalizeProductKey(value) {
 
@@ -2221,6 +2582,7 @@
         .trim();
 
     }
+
 
     function buildProductAliasVariants(value) {
 
@@ -2297,7 +2659,9 @@
             );
 
             aliases.add(
-                tokens[tokens.length - 1]
+                tokens[
+                    tokens.length - 1
+                ]
             );
 
         }
@@ -2334,7 +2698,14 @@
 
     }
 
-    function getReferenceQuantityForProduct(productName) {
+
+    /* =========================================================
+       BASE EXCEL
+       ========================================================= */
+
+    function getReferenceQuantityForProduct(
+        productName
+    ) {
 
         const ref =
             findReferenceForProduct(
@@ -2351,19 +2722,12 @@
         const candidates = [
 
             ref.quantite,
-
             ref.quantite_totale,
-
             ref['quantite kits'],
-
             ref['quantite kits / balancelle'],
-
             ref['qte annuel'],
-
             ref['quantite annuelle'],
-
             ref.qty,
-
             ref.quantity
 
         ];
@@ -2393,7 +2757,10 @@
 
     }
 
-    function findReferenceForProduct(productName) {
+
+    function findReferenceForProduct(
+        productName
+    ) {
 
         const refIndex =
             window.baseReferenceIndex ||
@@ -2430,7 +2797,8 @@
             const alias
             of aliasCandidates
         ) {
-                        const direct =
+
+            const direct =
                 baseRef[
                     String(alias).trim()
                 ];
@@ -2455,11 +2823,8 @@
                 refIndex
             );
 
-        let bestMatch =
-            null;
-
-        let bestScore =
-            0;
+        let bestMatch = null;
+        let bestScore = 0;
 
         candidates.forEach(
             key => {
@@ -2542,6 +2907,7 @@
 
     }
 
+
     async function loadBaseDonneesFromServer() {
 
         try {
@@ -2586,23 +2952,14 @@
                     const quantityCandidates = [
 
                         row.quantite,
-
                         row.quantite_totale,
-
                         row['quantite kits'],
-
                         row['quantite kits / balancelle'],
-
                         row['quantite annuelle'],
-
                         row['qte annuel'],
-
                         row.qty,
-
                         row.quantity,
-
                         row['Nombre Kits / jigs'],
-
                         row['Quantité kits / balancelle']
 
                     ];
@@ -2755,26 +3112,46 @@
 
     }
 
+
+    /* =========================================================
+       HORLOGE
+       ========================================================= */
+
     function updateClock() {
 
         const now =
             new Date();
 
-        document.getElementById(
-            'current-date'
-        ).textContent =
-            now.toLocaleDateString(
-                'fr-FR'
+        const dateEl =
+            document.getElementById(
+                'current-date'
             );
 
-        document.getElementById(
-            'current-time'
-        ).textContent =
-            now.toLocaleTimeString(
-                'fr-FR'
+        const timeEl =
+            document.getElementById(
+                'current-time'
             );
+
+        if (dateEl) {
+
+            dateEl.textContent =
+                now.toLocaleDateString(
+                    'fr-FR'
+                );
+
+        }
+
+        if (timeEl) {
+
+            timeEl.textContent =
+                now.toLocaleTimeString(
+                    'fr-FR'
+                );
+
+        }
 
     }
+
 
     setInterval(
         updateClock,
@@ -2782,6 +3159,11 @@
     );
 
     updateClock();
+
+
+    /* =========================================================
+       INITIALISATION DASHBOARD
+       ========================================================= */
 
     document.addEventListener(
         'DOMContentLoaded',
@@ -2827,28 +3209,56 @@
                 ) ||
                 '';
 
-            document.getElementById(
-                'userDisplay'
-            ).textContent =
-                userCode ||
-                userName;
+            const userDisplay =
+                document.getElementById(
+                    'userDisplay'
+                );
 
-            document.getElementById(
-                'dropdownName'
-            ).textContent =
-                userName;
+            if (userDisplay) {
 
-            document.getElementById(
-                'dropdownRole'
-            ).textContent =
-                userRole ||
-                '—';
+                userDisplay.textContent =
+                    userCode ||
+                    userName;
 
-            document.getElementById(
-                'dropdownEmail'
-            ).textContent =
-                userEmail ||
-                '—';
+            }
+
+            const dropdownName =
+                document.getElementById(
+                    'dropdownName'
+                );
+
+            if (dropdownName) {
+
+                dropdownName.textContent =
+                    userName;
+
+            }
+
+            const dropdownRole =
+                document.getElementById(
+                    'dropdownRole'
+                );
+
+            if (dropdownRole) {
+
+                dropdownRole.textContent =
+                    userRole ||
+                    '—';
+
+            }
+
+            const dropdownEmail =
+                document.getElementById(
+                    'dropdownEmail'
+                );
+
+            if (dropdownEmail) {
+
+                dropdownEmail.textContent =
+                    userEmail ||
+                    '—';
+
+            }
 
             const isAdmin =
                 sessionStorage.getItem(
@@ -2880,7 +3290,7 @@
                     'accountDropdown'
                 );
 
-            if (accountBtn) {
+            if (accountBtn && dropdown) {
 
                 accountBtn.addEventListener(
                     'click',
@@ -2928,6 +3338,10 @@
                 false
             );
 
+            updateCognexStatus(
+                false
+            );
+
             refreshCameraDevices();
 
             if (
@@ -2936,7 +3350,9 @@
 
                 setTimeout(
                     () => {
+
                         toggleCamera(true);
+
                     },
                     150
                 );
@@ -2945,6 +3361,11 @@
 
         }
     );
+
+
+    /* =========================================================
+       LOGOUT
+       ========================================================= */
 
     function logout() {
 
@@ -2996,6 +3417,11 @@
 
     }
 
+
+    /* =========================================================
+       STATUT CAMÉRA PC
+       ========================================================= */
+
     function updateCameraStatus(
         active
     ) {
@@ -3015,22 +3441,79 @@
 
         if (active) {
 
-            noSignal.style.display =
-                'none';
+            if (noSignal)
+                noSignal.style.display =
+                    'none';
+
+            if (badge) {
+
+                badge.textContent =
+                    'Caméra PC activée';
+
+                badge.className =
+                    'badge badge-green';
+
+            }
+
+        } else {
+
+            if (
+                !cognexActive &&
+                !importedImageData
+            ) {
+
+                if (noSignal)
+                    noSignal.style.display =
+                        'flex';
+
+            }
+
+            if (badge) {
+
+                badge.textContent =
+                    'Caméra inactive';
+
+                badge.className =
+                    'badge badge-amber';
+
+            }
+
+        }
+
+    }
+
+
+    /* =========================================================
+       STATUT COGNEX
+       ========================================================= */
+
+    function updateCognexStatus(
+        active
+    ) {
+
+        cognexActive =
+            active;
+
+        const badge =
+            document.getElementById(
+                'cognex-status-badge'
+            );
+
+        if (!badge)
+            return;
+
+        if (active) {
 
             badge.textContent =
-                'Camera Activée';
+                'Cognex connectée';
 
             badge.className =
                 'badge badge-green';
 
         } else {
 
-            noSignal.style.display =
-                'flex';
-
             badge.textContent =
-                'Caméra inactive';
+                'Cognex inactive';
 
             badge.className =
                 'badge badge-amber';
@@ -3038,6 +3521,11 @@
         }
 
     }
+
+
+    /* =========================================================
+       CHART
+       ========================================================= */
 
     function initChart() {
 
@@ -3157,32 +3645,85 @@
 
     }
 
+
+    /* =========================================================
+       QUANTITÉ DASHBOARD
+       ========================================================= */
+
     function getDashboardTotalQuantity() {
+
         const productMap = {};
 
-        readings.forEach(r => {
-            const product = String(r?.produit || '').trim();
+        readings.forEach(
+            r => {
 
-            if (!product || product === 'Aucun produit détecté') {
-                return;
+                const product =
+                    String(
+                        r?.produit || ''
+                    ).trim();
+
+                if (
+                    !product ||
+                    product ===
+                    'Aucun produit détecté'
+                ) {
+
+                    return;
+
+                }
+
+                if (
+                    !productMap[product]
+                ) {
+
+                    productMap[product] =
+                        0;
+
+                }
+
+                productMap[product] +=
+                    Number(
+                        r?.jigs_detectees ?? 0
+                    );
+
             }
+        );
 
-            if (!productMap[product]) {
-                productMap[product] = 0;
-            }
+        return Object.entries(
+            productMap
+        ).reduce(
+            (
+                sum,
+                [
+                    product,
+                    detectedJigs
+                ]
+            ) => {
 
-            productMap[product] += Number(r?.jigs_detectees ?? 0);
-        });
+                const productInfo =
+                    getProductInfo(
+                        product
+                    );
 
-        return Object.entries(productMap).reduce(
-            (sum, [product, detectedJigs]) => {
-                const productInfo = getProductInfo(product);
-                const kits = Number(productInfo?.kits) || 0;
-                return sum + kits * detectedJigs;
+                const kits =
+                    Number(
+                        productInfo?.kits
+                    ) || 0;
+
+                return sum +
+                    kits *
+                    detectedJigs;
+
             },
             0
         );
+
     }
+
+
+    /* =========================================================
+       CALCUL STATISTIQUES
+       ========================================================= */
 
     function calculateStats() {
 
@@ -3230,7 +3771,8 @@
                 0
             );
 
-        const totalQuantity = getDashboardTotalQuantity();
+        const totalQuantity =
+            getDashboardTotalQuantity();
 
         console.log(
             'Total quantity (kits):',
@@ -3319,7 +3861,8 @@
                         ) =>
                             a + b,
                         0
-                    ) / yieldValues.length
+                    ) /
+                    yieldValues.length
                 )
                 : 0;
 
@@ -3334,27 +3877,18 @@
             );
 
         if (totalTargetEl) {
-            console.log(
-                'Setting total quantity display:',
-                totalQuantity,
-                'element:',
-                totalTargetEl
-            );
+
             totalTargetEl.textContent =
                 totalQuantity || 0;
-            console.log(
-                'After setting, textContent is:',
-                totalTargetEl.textContent
-            );
-        } else {
-            console.warn(
-                'totalTargetEl not found!'
-            );
+
         }
 
-        if (yieldEl)
+        if (yieldEl) {
+
             yieldEl.textContent =
                 `${avgYield}%`;
+
+        }
 
         const trpEl =
             document.getElementById(
@@ -3398,7 +3932,10 @@
                 ? parseFloat(
                     String(
                         latestReading.taux || ''
-                    ).replace('%', '')
+                    ).replace(
+                        '%',
+                        ''
+                    )
                 )
                 : null;
 
@@ -3488,7 +4025,8 @@
             currentStatusEl.textContent =
                 latestProduct === '—'
                     ? 'En attente'
-                    : (
+                    :
+                    (
                         currentLoad >= 90
                             ? 'Chargé'
                             : 'En cours'
@@ -3497,7 +4035,8 @@
             currentStatusEl.className =
                 latestProduct === '—'
                     ? 'badge badge-amber'
-                    : (
+                    :
+                    (
                         currentLoad >= 90
                             ? 'badge badge-green'
                             : 'badge badge-lime'
@@ -3506,6 +4045,11 @@
         }
 
     }
+
+
+    /* =========================================================
+       DÉTECTIONS
+       ========================================================= */
 
     function getCapturedQuantityFromCountMap(
         countMap
@@ -3528,6 +4072,7 @@
 
     }
 
+
     function renderDetections(
         detections
     ) {
@@ -3537,6 +4082,9 @@
                 'detection-overlay'
             );
 
+        if (!overlay)
+            return;
+
         overlay.innerHTML =
             '';
 
@@ -3545,14 +4093,16 @@
 
         const scaleX =
             lastFrameSize.width
-                ? display.width /
-                  lastFrameSize.width
+                ?
+                display.width /
+                lastFrameSize.width
                 : 1;
 
         const scaleY =
             lastFrameSize.height
-                ? display.height /
-                  lastFrameSize.height
+                ?
+                display.height /
+                lastFrameSize.height
                 : 1;
 
         detections.forEach(
@@ -3636,6 +4186,11 @@
 
     }
 
+
+    /* =========================================================
+       CAPTURE CAMÉRA PC
+       ========================================================= */
+
     function captureFrame() {
 
         const video =
@@ -3644,6 +4199,7 @@
             );
 
         if (
+            !video ||
             !video.videoWidth ||
             !video.videoHeight
         ) {
@@ -3690,6 +4246,7 @@
 
     }
 
+
     function freezeCapturedFrame() {
 
         const video =
@@ -3697,14 +4254,23 @@
                 'camera-video'
             );
 
-        video.pause();
+        if (video)
+            video.pause();
 
-        document.getElementById(
-            'cam-rec-indicator'
-        ).innerHTML =
-            '<i class="fa-solid fa-camera" style="color: var(--valeo-lime); font-size: 8px;"></i> CAPTURÉE';
+        const indicator =
+            document.getElementById(
+                'cam-rec-indicator'
+            );
+
+        if (indicator) {
+
+            indicator.innerHTML =
+                '<i class="fa-solid fa-camera" style="color: var(--valeo-lime); font-size: 8px;"></i> CAPTURÉE';
+
+        }
 
     }
+
 
     async function resumeCameraPreview() {
 
@@ -3722,14 +4288,24 @@
                 'camera-video'
             );
 
+        if (!video)
+            return;
+
         try {
 
             await video.play();
 
-            document.getElementById(
-                'cam-rec-indicator'
-            ).innerHTML =
-                '<i class="fa-solid fa-circle" style="color: var(--accent-red); font-size: 8px;"></i> LIVE';
+            const indicator =
+                document.getElementById(
+                    'cam-rec-indicator'
+                );
+
+            if (indicator) {
+
+                indicator.innerHTML =
+                    '<i class="fa-solid fa-circle" style="color: var(--accent-red); font-size: 8px;"></i> LIVE';
+
+            }
 
         } catch (error) {
 
@@ -3742,7 +4318,462 @@
 
     }
 
-    async function processDetectionResponse(data) {
+
+    /* =========================================================
+       IMAGE IMPORTÉE
+       ========================================================= */
+
+    async function importPhoto(event) {
+
+        const file =
+            event.target.files[0];
+
+        if (!file)
+            return;
+
+        const reader =
+            new FileReader();
+
+        reader.onload =
+            async function(e) {
+
+                const imageData =
+                    e.target.result;
+
+                importedImageData =
+                    imageData;
+
+                cognexImageData =
+                    null;
+
+                currentImageSource =
+                    'imported';
+
+                cognexActive =
+                    false;
+
+                try {
+
+                    const dimensions =
+                        await getImageDimensions(
+                            imageData
+                        );
+
+                    lastFrameSize = {
+
+                        width:
+                            dimensions.width,
+
+                        height:
+                            dimensions.height
+
+                    };
+
+                } catch (err) {
+
+                    console.warn(
+                        'Dimensions image importée indisponibles:',
+                        err
+                    );
+
+                }
+
+                clearDetectionBoxes();
+
+                /*
+                    Si caméra PC active,
+                    on l'arrête avant d'afficher
+                    l'image importée.
+                */
+
+                if (cameraActive) {
+
+                    await toggleCamera(
+                        false
+                    );
+
+                }
+
+                const previewImg =
+                    document.getElementById(
+                        'imported-photo-preview'
+                    );
+
+                const video =
+                    document.getElementById(
+                        'camera-video'
+                    );
+
+                const noSignal =
+                    document.getElementById(
+                        'no-signal-overlay'
+                    );
+
+                if (video)
+                    video.style.display =
+                        'none';
+
+                if (noSignal)
+                    noSignal.style.display =
+                        'none';
+
+                if (previewImg) {
+
+                    previewImg.src =
+                        imageData;
+
+                    previewImg.style.display =
+                        'block';
+
+                }
+
+                const stats =
+                    document.getElementById(
+                        'cam-stats-overlay'
+                    );
+
+                if (stats) {
+
+                    stats.textContent =
+                        '📁 Image importée — appuyez sur « Déclencher la détection »';
+
+                }
+
+                const indicator =
+                    document.getElementById(
+                        'cam-rec-indicator'
+                    );
+
+                if (indicator) {
+
+                    indicator.innerHTML =
+                        '<i class="fa-solid fa-image" style="color: var(--valeo-lime); font-size: 8px;"></i> IMAGE';
+
+                }
+
+                updateCognexStatus(
+                    false
+                );
+
+                event.target.value =
+                    '';
+
+            };
+
+        reader.readAsDataURL(
+            file
+        );
+
+    }
+
+
+    /* =========================================================
+       COGNEX
+       =========================================================
+
+       IMPORTANT :
+
+       Le navigateur ne communique PAS directement avec
+       169.254.0.1:23.
+
+       Le navigateur appelle :
+
+           POST /api/cognex/capture
+
+       Le serveur exécutera le code Python Cognex.
+
+       La réponse attendue est :
+
+       {
+           success: true,
+           image: "data:image/jpeg;base64,..."
+       }
+
+       ou :
+
+       {
+           success: true,
+           image: "/captures/cognex_xxx.jpg"
+       }
+
+       ========================================================= */
+
+    async function updateCognexFrame() {
+
+        if (cognexFrameBusy || !cognexActive) {
+            return;
+        }
+
+        cognexFrameBusy = true;
+
+        try {
+
+            const response =
+                await fetch(
+                    '/api/cognex/capture',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        cache: 'no-store'
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.error ||
+                    data.message ||
+                    'Capture Cognex impossible'
+                );
+            }
+
+            const imageData =
+                data.image ||
+                data.imageData ||
+                data.capture;
+
+            if (!imageData) {
+                throw new Error(
+                    'Aucune image Cognex reçue.'
+                );
+            }
+
+            cognexImageData = imageData;
+            currentImageSource = 'cognex';
+
+            if (data.width && data.height) {
+                lastFrameSize = {
+                    width: Number(data.width),
+                    height: Number(data.height)
+                };
+            }
+
+            const previewImg =
+                document.getElementById(
+                    'imported-photo-preview'
+                );
+
+            const cognexPreview =
+                document.getElementById(
+                    'cognex-photo-preview'
+                );
+
+            const video =
+                document.getElementById(
+                    'camera-video'
+                );
+
+            const noSignal =
+                document.getElementById(
+                    'no-signal-overlay'
+                );
+
+            if (video) {
+                video.style.display = 'none';
+            }
+
+            if (previewImg) {
+                previewImg.style.display = 'none';
+            }
+
+            if (cognexPreview) {
+                cognexPreview.src = imageData;
+                cognexPreview.style.display = 'block';
+            }
+
+            if (noSignal) {
+                noSignal.style.display = 'none';
+            }
+
+            const indicator =
+                document.getElementById(
+                    'cam-rec-indicator'
+                );
+
+            if (indicator) {
+                indicator.innerHTML =
+                    '<i class="fa-solid fa-circle" style="color: var(--accent-red); font-size: 8px;"></i> LIVE COGNEX';
+            }
+
+            const stats =
+                document.getElementById(
+                    'cam-stats-overlay'
+                );
+
+            if (stats) {
+                stats.textContent =
+                    `COGNEX LIVE — ${data.width || lastFrameSize.width}x${data.height || lastFrameSize.height}`;
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Erreur flux Cognex:',
+                error
+            );
+
+            if (cognexActive) {
+                const stats =
+                    document.getElementById(
+                        'cam-stats-overlay'
+                    );
+
+                if (stats) {
+                    stats.textContent =
+                        `ERREUR COGNEX: ${error.message}`;
+                }
+            }
+
+        } finally {
+            cognexFrameBusy = false;
+        }
+    }
+
+
+    function startCognexStream() {
+
+        if (cognexStreamTimer) {
+            return;
+        }
+
+        updateCognexFrame();
+
+        cognexStreamTimer =
+            setInterval(
+                updateCognexFrame,
+                COGNEX_FRAME_INTERVAL_MS
+            );
+    }
+
+
+    function stopCognexStream() {
+
+        if (cognexStreamTimer) {
+            clearInterval(cognexStreamTimer);
+            cognexStreamTimer = null;
+        }
+
+        cognexFrameBusy = false;
+    }
+
+
+    async function captureCognex() {
+
+        const button =
+            document.getElementById(
+                'cognex-capture-btn'
+            );
+
+        const stats =
+            document.getElementById(
+                'cam-stats-overlay'
+            );
+
+        try {
+
+            if (button) {
+                button.disabled = true;
+                button.innerHTML =
+                    '<i class="fa-solid fa-spinner fa-spin"></i> Connexion Cognex...';
+            }
+
+            if (stats) {
+                stats.textContent =
+                    'Connexion à la caméra Cognex...';
+            }
+
+            if (cameraActive) {
+                await toggleCamera(false);
+            }
+
+            importedImageData = null;
+            currentImageSource = 'cognex';
+            cognexActive = true;
+
+            const previewImg =
+                document.getElementById(
+                    'imported-photo-preview'
+                );
+
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.style.display = 'none';
+            }
+
+            updateCognexStatus(true);
+
+            const noSignal =
+                document.getElementById(
+                    'no-signal-overlay'
+                );
+
+            if (noSignal) {
+                noSignal.style.display = 'none';
+            }
+
+            startCognexStream();
+
+            if (button) {
+                button.innerHTML =
+                    '<i class="fa-solid fa-industry"></i> Cognex LIVE';
+            }
+
+            saveDashboardState();
+
+        } catch (error) {
+
+            console.error(
+                'Erreur Cognex:',
+                error
+            );
+
+            stopCognexStream();
+            cognexActive = false;
+            cognexImageData = null;
+            currentImageSource = 'none';
+            updateCognexStatus(false);
+
+            if (stats) {
+                stats.textContent =
+                    `ERREUR COGNEX: ${error.message}`;
+            }
+
+            alert(
+                `Impossible de connecter la caméra Cognex.\n\n${error.message}`
+            );
+
+        } finally {
+
+            if (button) {
+                button.disabled = false;
+
+                if (cognexActive) {
+                    button.innerHTML =
+                        '<i class="fa-solid fa-industry"></i> Cognex LIVE';
+                } else {
+                    button.innerHTML =
+                        '<i class="fa-solid fa-industry"></i> Caméra Cognex';
+                }
+            }
+        }
+    }
+
+
+    function connectCognex() {
+        return captureCognex();
+    }
+
+    /* =========================================================
+       DÉTECTION IA
+       ========================================================= */
+
+    async function processDetectionResponse(
+        data
+    ) {
 
         console.log(
             'Detection response:',
@@ -3762,10 +4793,17 @@
             data.capture ||
             'capture.jpg';
 
-        document.getElementById(
-            'cam-stats-overlay'
-        ).textContent =
-            `📸 Capture: ${captureName}`;
+        const camStats =
+            document.getElementById(
+                'cam-stats-overlay'
+            );
+
+        if (camStats) {
+
+            camStats.textContent =
+                `📸 Capture: ${captureName}`;
+
+        }
 
         const detections =
             data.detections ||
@@ -3782,7 +4820,10 @@
             ]
         );
 
-        setTimeout(clearDetectionBoxes, 1500);
+        setTimeout(
+            clearDetectionBoxes,
+            1500
+        );
 
         const countText =
             Object.entries(
@@ -3808,19 +4849,21 @@
                 }`
                 : '';
 
-        document.getElementById(
-            'cam-stats-overlay'
-        ).textContent =
-            [
-                `📸 ${captureName}`,
-                countText,
-                jigText
-            ]
-            .filter(Boolean)
-            .join(
-                ' | '
-            ) ||
-            'Aucun produit >= 40%';
+        if (camStats) {
+
+            camStats.textContent =
+                [
+                    `📸 ${captureName}`,
+                    countText,
+                    jigText
+                ]
+                .filter(Boolean)
+                .join(
+                    ' | '
+                ) ||
+                'Aucun produit >= 40%';
+
+        }
 
         const detectedProducts =
             Object.keys(
@@ -3834,7 +4877,8 @@
 
         const detectedQuantity =
             firstProduct
-                ? (
+                ?
+                (
                     data.counts[
                         firstProduct
                     ] || 0
@@ -3977,44 +5021,10 @@
 
     }
 
-    async function importPhoto(event) {
-        const file = event.target.files[0];
-        if (!file) return;
 
-        const reader = new FileReader();
-
-        reader.onload = async function(e) {
-            const imageData = e.target.result;
-            importedImageData = imageData;
-
-            try {
-                const dimensions = await getImageDimensions(imageData);
-                lastFrameSize = { width: dimensions.width, height: dimensions.height };
-            } catch (err) {
-                console.warn('Dimensions image importée indisponibles:', err);
-            }
-
-            clearDetectionBoxes();
-
-            const previewImg = document.getElementById('imported-photo-preview');
-            const video = document.getElementById('camera-video');
-            const noSignal = document.getElementById('no-signal-overlay');
-
-            if (video) video.style.display = 'none';
-            if (noSignal) noSignal.style.display = 'none';
-            if (previewImg) {
-                previewImg.src = imageData;
-                previewImg.style.display = 'block';
-            }
-
-            const stats = document.getElementById('cam-stats-overlay');
-            if (stats) stats.textContent = '📁 Image importée — appuyez sur « Déclencher la détection »';
-
-            event.target.value = '';
-        };
-
-        reader.readAsDataURL(file);
-    }
+    /* =========================================================
+       NORMALISATION QUANTITÉ
+       ========================================================= */
 
     function normalizeQuantityValue(
         value
@@ -4066,6 +5076,11 @@
 
     }
 
+
+    /* =========================================================
+       EXCEL
+       ========================================================= */
+
     function normalizeHeader(
         label
     ) {
@@ -4090,6 +5105,7 @@
         .trim();
 
     }
+
 
     function getCellByAliases(
         row,
@@ -4131,46 +5147,140 @@
 
     }
 
-    async function generateProductionXML(productNo, eventDateTime, quantity) {
+
+    /* =========================================================
+       XML
+       ========================================================= */
+
+    async function generateProductionXML(
+        productNo,
+        eventDateTime,
+        quantity
+    ) {
+
         try {
-            const response = await fetch('/api/generate-xml', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ProductNo: String(productNo || '').trim(),
-                    EventDateTime: eventDateTime || new Date().toISOString(),
-                    Quantity: Number(quantity) || 0
-                })
-            });
 
-            const result = await response.json();
+            const response =
+                await fetch(
+                    '/api/generate-xml',
+                    {
 
-            if (!response.ok || !result.success) {
-                throw new Error(result.error || 'Erreur génération XML');
+                        method:
+                            'POST',
+
+                        headers:
+                            {
+                                'Content-Type':
+                                    'application/json'
+                            },
+
+                        body:
+                            JSON.stringify({
+
+                                ProductNo:
+                                    String(
+                                        productNo || ''
+                                    ).trim(),
+
+                                EventDateTime:
+                                    eventDateTime ||
+                                    new Date().toISOString(),
+
+                                Quantity:
+                                    Number(
+                                        quantity
+                                    ) || 0
+
+                            })
+
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.error ||
+                    'Erreur génération XML'
+                );
+
             }
 
-            console.log('✓ XML généré automatiquement :', result.filename);
-            console.log('  ProductNo :', result.data?.ProductNo);
-            console.log('  EventDateTime :', result.data?.EventDateTime);
-            console.log('  Quantity (Quantité Totale en kits) :', result.data?.Quantity);
+            console.log(
+                '✓ XML généré automatiquement :',
+                result.filename
+            );
+
+            console.log(
+                'ProductNo :',
+                result.data?.ProductNo
+            );
+
+            console.log(
+                'EventDateTime :',
+                result.data?.EventDateTime
+            );
+
+            console.log(
+                'Quantity :',
+                result.data?.Quantity
+            );
 
             return result;
+
         } catch (error) {
-            console.error('Erreur génération XML :', error);
+
+            console.error(
+                'Erreur génération XML :',
+                error
+            );
+
             return null;
+
         }
+
     }
 
-    function escapeXml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
+
+    function escapeXml(
+        value
+    ) {
+
+        return String(
+            value ?? ''
+        )
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+        .replace(
+            /</g,
+            '&lt;'
+        )
+        .replace(
+            />/g,
+            '&gt;'
+        )
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+        .replace(
+            /'/g,
+            '&apos;'
+        );
+
     }
+
+
+    /* =========================================================
+       ENREGISTREMENT DES DÉTECTIONS
+       ========================================================= */
 
     function recordDetections(
         counts,
@@ -4208,7 +5318,10 @@
         const quantity =
             jigsDetected === 0
                 ? 0
-                : (counts[product] || 0);
+                :
+                (
+                    counts[product] || 0
+                );
 
         const productInfo =
             getProductInfo(
@@ -4218,7 +5331,9 @@
         const jigsTotal =
             Number(
                 productInfo.jigsTotal ||
-                findReferenceForProduct(product)?.jigs_totales ||
+                findReferenceForProduct(
+                    product
+                )?.jigs_totales ||
                 0
             ) || 0;
 
@@ -4227,77 +5342,164 @@
                 ? Math.min(
                     100,
                     Math.round(
-                        (jigsDetected / jigsTotal) * 100
+                        (
+                            jigsDetected /
+                            jigsTotal
+                        ) * 100
                     )
                 )
                 : 0;
 
-        const normalizedProduct = String(product || '').trim().toUpperCase();
+        const normalizedProduct =
+            String(
+                product || ''
+            )
+            .trim()
+            .toUpperCase();
 
-        if (currentProductName !== normalizedProduct) {
-            sameProductDetectionCount = 0;
-            consecutiveEmptyCount = 0;
-            window.__valeoAutoSaved = false;
+        if (
+            currentProductName !==
+            normalizedProduct
+        ) {
+
+            sameProductDetectionCount =
+                0;
+
+            consecutiveEmptyCount =
+                0;
+
+            window.__valeoAutoSaved =
+                false;
+
         }
 
         if (
             currentProductName &&
-            currentProductName !== normalizedProduct &&
+            currentProductName !==
+            normalizedProduct &&
             readings.length > 0
         ) {
 
-            const previousProduct = currentProductName;
-            const previousReading = readings[0];
+            const previousProduct =
+                currentProductName;
+
+            const previousReading =
+                readings[0];
 
             fetch(
                 '/api/history',
                 {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        produit: previousProduct,
-                        quantite: previousReading?.quantite || 0,
-                        jigs_detectees: previousReading?.jigs_detectees || 0,
-                        jigs_totales: previousReading?.jigs_totales || 0,
-                        taux: previousReading?.taux || '0%'
-                    })
+
+                    method:
+                        'POST',
+
+                    headers:
+                        {
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                    body:
+                        JSON.stringify({
+
+                            produit:
+                                previousProduct,
+
+                            quantite:
+                                previousReading?.quantite ||
+                                0,
+
+                            jigs_detectees:
+                                previousReading?.jigs_detectees ||
+                                0,
+
+                            jigs_totales:
+                                previousReading?.jigs_totales ||
+                                0,
+
+                            taux:
+                                previousReading?.taux ||
+                                '0%'
+
+                        })
+
                 }
-            ).catch(() => {});
+            ).catch(
+                () => {}
+            );
 
             readings = [];
-            window.productTotals = {};
-            const tbody = document.getElementById('readings-table-body');
+
+            window.productTotals =
+                {};
+
+            const tbody =
+                document.getElementById(
+                    'readings-table-body'
+                );
+
             if (tbody) {
-                tbody.innerHTML = '';
+
+                tbody.innerHTML =
+                    '';
+
             }
 
-            sameProductDetectionCount = 0;
+            sameProductDetectionCount =
+                0;
 
             console.log(
                 `🔄 Produit changé: ${previousProduct} → ${product}, tableau réinitialisé`
             );
+
         }
 
-        if (currentProductName === normalizedProduct) {
+        if (
+            currentProductName ===
+            normalizedProduct
+        ) {
+
             sameProductDetectionCount++;
+
         } else {
-            sameProductDetectionCount = 1;
+
+            sameProductDetectionCount =
+                1;
+
         }
 
-        if (jigsDetected === 0 && currentProductName) {
+        if (
+            jigsDetected === 0 &&
+            currentProductName
+        ) {
+
             consecutiveEmptyCount++;
-        } else if (jigsDetected > 0) {
-            consecutiveEmptyCount = 0;
+
+        } else if (
+            jigsDetected > 0
+        ) {
+
+            consecutiveEmptyCount =
+                0;
+
         }
 
-        currentProductName = normalizedProduct;
+        currentProductName =
+            normalizedProduct;
 
-        if (jigsDetected > 0) {
+        if (
+            jigsDetected > 0
+        ) {
 
-            window.productTotals[product] =
-                (window.productTotals[product] || 0) + quantity;
+            window.productTotals[
+                product
+            ] =
+                (
+                    window.productTotals[
+                        product
+                    ] || 0
+                ) +
+                quantity;
 
         }
 
@@ -4329,7 +5531,10 @@
 
             quantite_totale:
                 jigsDetected > 0
-                    ? window.productTotals[product]
+                    ?
+                    window.productTotals[
+                        product
+                    ]
                     : 0,
 
             jigs_totales:
@@ -4342,11 +5547,6 @@
                 `${rendement}%`
 
         };
-
-        console.log(
-            `Adding row:`,
-            reading
-        );
 
         readings.unshift(
             reading
@@ -4365,24 +5565,50 @@
 
         calculateStats();
 
-        if (jigsDetected > 0) {
-            const kitsPerJig = Number(productInfo?.kits) || 0;
-            const xmlQuantity = jigsDetected * kitsPerJig;
+        if (
+            jigsDetected > 0
+        ) {
+
+            const kitsPerJig =
+                Number(
+                    productInfo?.kits
+                ) || 0;
+
+            const xmlQuantity =
+                jigsDetected *
+                kitsPerJig;
 
             generateProductionXML(
                 reading.produit,
                 now.toISOString(),
                 xmlQuantity
             );
+
         }
 
         updateChart();
 
         saveDashboardState();
 
-        const lastReading = readings[0];
-        const currentRendement = parseFloat(String(lastReading?.taux || '0').replace('%', ''));
-        const isLowRendement = !isNaN(currentRendement) && currentRendement < 90;
+        const lastReading =
+            readings[0];
+
+        const currentRendement =
+            parseFloat(
+                String(
+                    lastReading?.taux ||
+                    '0'
+                ).replace(
+                    '%',
+                    ''
+                )
+            );
+
+        const isLowRendement =
+            !isNaN(
+                currentRendement
+            ) &&
+            currentRendement < 90;
 
         if (
             isLowRendement &&
@@ -4393,27 +5619,44 @@
             fetch(
                 '/api/alert-empty-balancelles',
                 {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
-                    body: JSON.stringify({
-                        produit:
-                            currentProductName,
-                        quantite:
-                            window.productTotals[currentProductName] ||
-                            lastReading?.quantite ||
-                            0,
-                        rendement:
-                            currentRendement,
-                        timestamp:
-                            new Date().toISOString()
-                    })
-                }
-            ).catch(() => {});
 
-            window.__valeoAutoSaved = true;
+                    method:
+                        'POST',
+
+                    headers:
+                        {
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                    body:
+                        JSON.stringify({
+
+                            produit:
+                                currentProductName,
+
+                            quantite:
+                                window.productTotals[
+                                    currentProductName
+                                ] ||
+                                lastReading?.quantite ||
+                                0,
+
+                            rendement:
+                                currentRendement,
+
+                            timestamp:
+                                new Date().toISOString()
+
+                        })
+
+                }
+            ).catch(
+                () => {}
+            );
+
+            window.__valeoAutoSaved =
+                true;
 
             console.log(
                 `🔄 Alerte: rendement ${currentRendement}% < 90%`
@@ -4427,6 +5670,11 @@
         );
 
     }
+
+
+    /* =========================================================
+       TEST DÉTECTION
+       ========================================================= */
 
     window.testDetection =
         async function() {
@@ -4453,10 +5701,6 @@
                 const testCount =
                     5;
 
-                console.log(
-                    `✓ Test product: ${randomProduct}`
-                );
-
                 const testData = {
 
                     success:
@@ -4468,20 +5712,23 @@
                     detections: [
 
                         {
+
                             product:
                                 randomProduct,
 
                             confidence:
                                 0.95
+
                         }
 
                     ],
 
-                    counts:
-                        {
-                            [randomProduct]:
-                                testCount
-                        },
+                    counts: {
+
+                        [randomProduct]:
+                            testCount
+
+                    },
 
                     jig_detections:
                         [],
@@ -4494,22 +5741,13 @@
 
                 };
 
-                console.log(
-                    'Test data:',
-                    testData
-                );
-
-                console.log(
-                    '✓ Adding to table...'
-                );
-
                 recordDetections(
                     testData.counts,
                     testData.detections
                 );
 
                 console.log(
-                    '✓ Test complete! Check the table.'
+                    '✓ Test complete!'
                 );
 
             } catch (error) {
@@ -4523,35 +5761,108 @@
 
         };
 
+
+    /* =========================================================
+       DÉCLENCHEMENT DÉTECTION
+       ========================================================= */
+
     async function triggerSensor() {
 
-        if (detectionInProgress) {
+        if (
+            detectionInProgress
+        ) {
+
             return;
+
         }
 
-        let frame = importedImageData;
-        const usingImportedImage = !!frame;
+        /*
+            PRIORITÉ DES SOURCES :
 
-        if (!frame) {
+            1. Cognex
+            2. Image importée
+            3. Caméra PC
+        */
+
+        let frame = null;
+
+        let usingImportedImage =
+            false;
+
+        let usingCognex =
+            false;
+
+        /*
+            COGNEX
+        */
+
+        if (
+            currentImageSource ===
+            'cognex' &&
+            cognexImageData
+        ) {
+
+            frame =
+                cognexImageData;
+
+            usingCognex =
+                true;
+
+        }
+
+        /*
+            IMAGE IMPORTÉE
+        */
+
+        else if (
+            importedImageData
+        ) {
+
+            frame =
+                importedImageData;
+
+            usingImportedImage =
+                true;
+
+        }
+
+        /*
+            CAMÉRA PC
+        */
+
+        else {
+
             if (!cameraActive) {
-                alert('Veuillez d’abord activer la caméra ou importer une image.');
+
+                alert(
+                    'Veuillez d’abord activer la caméra PC, capturer une image Cognex ou importer une image.'
+                );
+
                 return;
+
             }
 
-            frame = captureFrame();
+            frame =
+                captureFrame();
 
             if (!frame) {
-                alert('Impossible de capturer l’image. La caméra n’est pas prête.');
+
+                alert(
+                    'Impossible de capturer l’image. La caméra PC n’est pas prête.'
+                );
+
                 return;
+
             }
 
             freezeCapturedFrame();
+
         }
 
         if (!frame) {
 
             alert(
-                'Impossible de capturer l’image. La caméra n’est pas prête.'
+                'Aucune image disponible pour la détection.'
             );
 
             return;
@@ -4563,11 +5874,15 @@
                 'sensor-trigger-btn'
             );
 
-        button.disabled =
-            true;
+        if (button) {
 
-        button.innerHTML =
-            '<i class="fa-solid fa-spinner fa-spin"></i> Capture...';
+            button.disabled =
+                true;
+
+            button.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin"></i> Capture...';
+
+        }
 
         try {
 
@@ -4613,10 +5928,17 @@
                 error
             );
 
-            document.getElementById(
-                'cam-stats-overlay'
-            ).textContent =
-                `ERREUR IA: ${error.message}`;
+            const stats =
+                document.getElementById(
+                    'cam-stats-overlay'
+                );
+
+            if (stats) {
+
+                stats.textContent =
+                    `ERREUR IA: ${error.message}`;
+
+            }
 
         } finally {
 
@@ -4628,22 +5950,42 @@
                     )
             );
 
-            if (!usingImportedImage) {
+            /*
+                Reprendre uniquement
+                la caméra PC.
+            */
+
+            if (
+                cameraActive &&
+                !usingImportedImage &&
+                !usingCognex
+            ) {
+
                 await resumeCameraPreview();
+
             }
 
             detectionInProgress =
                 false;
 
-            button.disabled =
-                false;
+            if (button) {
 
-            button.innerHTML =
-                '<i class="fa-solid fa-radar"></i> Déclencher la détection';
+                button.disabled =
+                    false;
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-radar"></i> Déclencher la détection';
+
+            }
 
         }
 
     }
+
+
+    /* =========================================================
+       GRAPHIQUE
+       ========================================================= */
 
     function updateChart() {
 
@@ -4677,6 +6019,11 @@
 
     }
 
+
+    /* =========================================================
+       TABLEAU
+       ========================================================= */
+
     function insertRow(
         r,
         isNew = false
@@ -4704,12 +6051,15 @@
 
         const jigsDetected =
             Number(
-                r.jigs_detectees || r.quantite || 0
+                r.jigs_detectees ||
+                r.quantite ||
+                0
             );
 
         const jigsTotal =
             Number(
-                r.jigs_totales || 0
+                r.jigs_totales ||
+                0
             ) ||
             getProductInfo(
                 r.produit
@@ -4750,7 +6100,8 @@
         const fillClass =
             rateVal >= 100
                 ? 'green'
-                : rateVal > 50
+                :
+                rateVal > 50
                     ? 'amber'
                     : 'lime';
 
@@ -4758,9 +6109,11 @@
 
             <td>
                 <strong>#${r.id}</strong><br>
+
                 <span style="font-size: 0.85rem; color: var(--muted);">
                     ${r.date} ${r.heure}
                 </span>
+
             </td>
 
             <td>
@@ -4839,6 +6192,11 @@
 
     }
 
+
+    /* =========================================================
+       CAMÉRAS PC
+       ========================================================= */
+
     async function refreshCameraDevices() {
 
         const select =
@@ -4859,67 +6217,85 @@
             selectedCameraId ||
             select.value;
 
-        const devices =
-            await navigator.mediaDevices
-                .enumerateDevices();
+        try {
 
-        const cameras =
-            devices.filter(
-                device =>
-                    device.kind ===
-                    'videoinput'
-            );
+            const devices =
+                await navigator.mediaDevices
+                    .enumerateDevices();
 
-        select.innerHTML =
-            '<option value="">Caméra par défaut</option>';
-
-        cameras.forEach(
-            (
-                camera,
-                index
-            ) => {
-
-                const option =
-                    document.createElement(
-                        'option'
-                    );
-
-                option.value =
-                    camera.deviceId;
-
-                option.textContent =
-                    camera.label ||
-                    `Caméra ${index + 1}`;
-
-                select.appendChild(
-                    option
+            const cameras =
+                devices.filter(
+                    device =>
+                        device.kind ===
+                        'videoinput'
                 );
 
+            select.innerHTML =
+                '<option value="">Caméra par défaut</option>';
+
+            cameras.forEach(
+                (
+                    camera,
+                    index
+                ) => {
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+                    option.value =
+                        camera.deviceId;
+
+                    option.textContent =
+                        camera.label ||
+                        `Caméra ${index + 1}`;
+
+                    select.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+            if (
+                currentValue &&
+                cameras.some(
+                    camera =>
+                        camera.deviceId ===
+                        currentValue
+                )
+            ) {
+
+                select.value =
+                    currentValue;
+
             }
-        );
 
-        if (
-            currentValue &&
-            cameras.some(
-                camera =>
-                    camera.deviceId ===
-                    currentValue
-            )
-        ) {
+        } catch (error) {
 
-            select.value =
-                currentValue;
+            console.error(
+                'Erreur liste caméras:',
+                error
+            );
 
         }
 
     }
 
+
     async function changeCameraDevice() {
 
-        selectedCameraId =
+        const select =
             document.getElementById(
                 'camera-device-select'
-            ).value;
+            );
+
+        if (!select)
+            return;
+
+        selectedCameraId =
+            select.value;
 
         if (cameraActive) {
 
@@ -4935,6 +6311,11 @@
 
     }
 
+
+    /* =========================================================
+       ACTIVATION / DÉSACTIVATION CAMÉRA PC
+       ========================================================= */
+
     async function toggleCamera(
         state
     ) {
@@ -4944,12 +6325,50 @@
                 'camera-video'
             );
 
+        if (!video)
+            return;
+
+        /*
+            ACTIVATION
+        */
+
         if (
             state &&
             !mediaStream
         ) {
 
             try {
+
+                /*
+                    On désactive la source Cognex.
+                */
+
+                cognexActive =
+                    false;
+
+                cognexImageData =
+                    null;
+
+                importedImageData =
+                    null;
+
+                currentImageSource =
+                    'pc';
+
+                const previewImg =
+                    document.getElementById(
+                        'imported-photo-preview'
+                    );
+
+                if (previewImg) {
+
+                    previewImg.src =
+                        '';
+
+                    previewImg.style.display =
+                        'none';
+
+                }
 
                 const constraints = {
 
@@ -4974,10 +6393,11 @@
                     selectedCameraId
                 ) {
 
-                    constraints.video.deviceId = {
-                        exact:
-                            selectedCameraId
-                    };
+                    constraints.video.deviceId =
+                        {
+                            exact:
+                                selectedCameraId
+                        };
 
                 }
 
@@ -4994,18 +6414,6 @@
                 video.style.display =
                     'block';
 
-                const previewImg =
-                    document.getElementById(
-                        'imported-photo-preview'
-                    );
-
-                if (previewImg) {
-
-                    previewImg.style.display =
-                        'none';
-
-                }
-
                 await refreshCameraDevices();
 
             } catch (error) {
@@ -5018,7 +6426,7 @@
                 );
 
                 alert(
-                    'Impossible d’accéder à la caméra. Autorisez son utilisation puis réessayez.'
+                    'Impossible d’accéder à la caméra PC. Autorisez son utilisation puis réessayez.'
                 );
 
                 console.error(
@@ -5030,6 +6438,11 @@
             }
 
         }
+
+
+        /*
+            DÉSACTIVATION
+        */
 
         if (
             !state &&
@@ -5054,33 +6467,81 @@
 
         }
 
+
+        /*
+            CAMÉRA ACTIVE
+        */
+
         if (
             state &&
             mediaStream
         ) {
 
-            const previewImg = document.getElementById('imported-photo-preview');
-            const noSignal = document.getElementById('no-signal-overlay');
-            const overlay = document.getElementById('detection-overlay');
+            const previewImg =
+                document.getElementById(
+                    'imported-photo-preview'
+                );
+
+            const noSignal =
+                document.getElementById(
+                    'no-signal-overlay'
+                );
+
+            const overlay =
+                document.getElementById(
+                    'detection-overlay'
+                );
 
             if (previewImg) {
-                previewImg.src = '';
-                previewImg.style.display = 'none';
+
+                previewImg.src =
+                    '';
+
+                previewImg.style.display =
+                    'none';
+
             }
 
-            importedImageData = null;
-            if (overlay) overlay.innerHTML = '';
-            if (noSignal) noSignal.style.display = 'none';
-            video.style.display = 'block';
+            importedImageData =
+                null;
+
+            cognexImageData =
+                null;
+
+            currentImageSource =
+                'pc';
+
+            if (overlay)
+                overlay.innerHTML =
+                    '';
+
+            if (noSignal)
+                noSignal.style.display =
+                    'none';
+
+            video.style.display =
+                'block';
 
             await video.play();
 
-            document.getElementById(
-                'cam-rec-indicator'
-            ).innerHTML =
-                '<i class="fa-solid fa-circle" style="color: var(--accent-red); font-size: 8px;"></i> LIVE';
+            const indicator =
+                document.getElementById(
+                    'cam-rec-indicator'
+                );
+
+            if (indicator) {
+
+                indicator.innerHTML =
+                    '<i class="fa-solid fa-circle" style="color: var(--accent-red); font-size: 8px;"></i> LIVE';
+
+            }
+
+            updateCognexStatus(
+                false
+            );
 
         }
+
 
         updateCameraStatus(
             state
@@ -5088,17 +6549,30 @@
 
         saveDashboardState();
 
+
+        /*
+            CAMÉRA DÉSACTIVÉE
+        */
+
         if (!state) {
 
-            document.getElementById(
-                'detection-overlay'
-            ).innerHTML =
-                '';
+            const overlay =
+                document.getElementById(
+                    'detection-overlay'
+                );
 
-            document.getElementById(
-                'cam-stats-overlay'
-            ).textContent =
-                'NO SIGNAL';
+            if (overlay)
+                overlay.innerHTML =
+                    '';
+
+            const stats =
+                document.getElementById(
+                    'cam-stats-overlay'
+                );
+
+            if (stats)
+                stats.textContent =
+                    'NO SIGNAL';
 
             const infoScanId =
                 document.getElementById(
@@ -5149,6 +6623,48 @@
 
     }
 
+
+    /* =========================================================
+       ARRÊT AUTOMATIQUE DES SOURCES
+       ========================================================= */
+
+    function clearCurrentImageSource() {
+
+        importedImageData =
+            null;
+
+        cognexImageData =
+            null;
+
+        currentImageSource =
+            'none';
+
+        updateCognexStatus(
+            false
+        );
+
+        const previewImg =
+            document.getElementById(
+                'imported-photo-preview'
+            );
+
+        if (previewImg) {
+
+            previewImg.src =
+                '';
+
+            previewImg.style.display =
+                'none';
+
+        }
+
+    }
+
+
+    /* =========================================================
+       SAUVEGARDE À LA FERMETURE
+       ========================================================= */
+
     window.addEventListener(
         'pagehide',
         function() {
@@ -5157,6 +6673,7 @@
 
         }
     );
+
 
 </script>
 
