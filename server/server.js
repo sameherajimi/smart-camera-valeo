@@ -25,10 +25,14 @@ const {
 
 const execFileAsync = promisify(execFile);
 
-// Chemin mis à jour vers votre environnement virtuel
+// Chemin dynamique vers l'environnement virtuel Python (.venv)
+const defaultVenvPython = process.platform === 'win32'
+    ? path.resolve(__dirname, '..', '.venv', 'Scripts', 'python.exe')
+    : path.resolve(__dirname, '..', '.venv', 'bin', 'python');
+
 const pythonCommand =
     process.env.VALEO_PYTHON ||
-    'C:\\Users\\hajina\\Downloads\\smart-camera-valeo-master\\.venv\\Scripts\\python.exe';
+    (fsSync.existsSync(defaultVenvPython) ? defaultVenvPython : 'python');
 
 const app = express();
 const PORT = 3000;
@@ -1238,14 +1242,19 @@ app.post(
                     .toString(36)
                     .slice(2, 8)}.jpg`;
 
-            imagePath =
+            const tempCaptureName =
+                `temp-${captureName}`;
+
+            const tempImagePath =
                 path.join(
                     capturesDirectory,
-                    captureName
+                    tempCaptureName
                 );
 
+            imagePath = tempImagePath;
+
             await fs.writeFile(
-                imagePath,
+                tempImagePath,
                 imageBuffer,
                 {
                     mode: 0o600
@@ -1279,7 +1288,7 @@ app.post(
                         pythonCommand,
                         [
                             scriptPath,
-                            imagePath
+                            tempImagePath
                         ],
                         {
                             timeout:
@@ -1348,6 +1357,62 @@ app.post(
                     );
                 }
 
+                // Déterminer la classe du produit pour le rangement dans le dossier de classe
+                let detectedClass = 'non_classe';
+                if (
+                    Array.isArray(inference.detections) &&
+                    inference.detections.length > 0 &&
+                    inference.detections[0].product
+                ) {
+                    detectedClass = inference.detections[0].product;
+                } else if (
+                    inference.counts &&
+                    typeof inference.counts === 'object' &&
+                    Object.keys(inference.counts).length > 0
+                ) {
+                    detectedClass = Object.keys(inference.counts)[0];
+                }
+
+                const safeClass =
+                    String(detectedClass)
+                        .trim()
+                        .replace(/[^a-zA-Z0-9_-]/g, '_') || 'non_classe';
+
+                const classDirectory =
+                    path.join(
+                        capturesDirectory,
+                        safeClass
+                    );
+
+                await fs.mkdir(
+                    classDirectory,
+                    { recursive: true }
+                );
+
+                const finalImagePath =
+                    path.join(
+                        classDirectory,
+                        captureName
+                    );
+
+                const relativeCapturePath =
+                    `${safeClass}/${captureName}`;
+
+                try {
+                    await fs.rename(
+                        tempImagePath,
+                        finalImagePath
+                    );
+                } catch (_) {
+                    await fs.copyFile(
+                        tempImagePath,
+                        finalImagePath
+                    );
+                    await fs.unlink(tempImagePath).catch(() => {});
+                }
+
+                imagePath = finalImagePath;
+
                 const savedHistory =
                     await saveDetectionEvents(
                         inference.counts,
@@ -1363,7 +1428,11 @@ app.post(
                 return res.json({
                     success: true,
                     capture:
+                        relativeCapturePath,
+                    capture_name:
                         captureName,
+                    product_class:
+                        safeClass,
                     ...inference,
                     historySaved:
                         savedHistory.length > 0,
@@ -1393,6 +1462,25 @@ app.post(
                         inferenceError.stderr
                     );
                 }
+
+                try {
+                    const fallbackDir =
+                        path.join(
+                            capturesDirectory,
+                            'non_classe'
+                        );
+                    await fs.mkdir(
+                        fallbackDir,
+                        { recursive: true }
+                    );
+                    await fs.rename(
+                        tempImagePath,
+                        path.join(
+                            fallbackDir,
+                            captureName
+                        )
+                    ).catch(() => {});
+                } catch (_) {}
 
                 return res.status(500).json({
                     success: false,
@@ -2005,12 +2093,24 @@ app.post(
 
             const transporter =
                 nodemailer.createTransport({
-                    service: 'gmail',
+                    service:
+                        process.env.VALEO_SMTP_SERVICE || 'gmail',
+                    host:
+                        process.env.VALEO_SMTP_HOST,
+                    port:
+                        process.env.VALEO_SMTP_PORT
+                            ? parseInt(process.env.VALEO_SMTP_PORT, 10)
+                            : undefined,
+                    secure:
+                        process.env.VALEO_SMTP_SECURE === 'true',
                     auth: {
                         user:
                             process.env.VALEO_ALERT_EMAIL,
                         pass:
                             process.env.VALEO_ALERT_PASSWORD
+                    },
+                    tls: {
+                        rejectUnauthorized: false
                     }
                 });
 

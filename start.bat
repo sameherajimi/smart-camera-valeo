@@ -400,6 +400,56 @@ if errorlevel 1 (
 )
 
 echo.
+echo Checking OpenCV...
+echo.
+
+"%PYTHON_EXE%" -c "import cv2; print('OpenCV OK')" >nul 2>&1
+
+if errorlevel 1 (
+    echo OpenCV not installed.
+    echo Installing OpenCV...
+    echo.
+
+    "%PYTHON_EXE%" -m pip install opencv-python
+
+    if errorlevel 1 (
+        color 0C
+        echo.
+        echo ERROR: OpenCV installation failed.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    echo OK - OpenCV already installed.
+)
+
+echo.
+echo Checking NumPy...
+echo.
+
+"%PYTHON_EXE%" -c "import numpy; print('NumPy OK')" >nul 2>&1
+
+if errorlevel 1 (
+    echo NumPy not installed.
+    echo Installing NumPy...
+    echo.
+
+    "%PYTHON_EXE%" -m pip install numpy
+
+    if errorlevel 1 (
+        color 0C
+        echo.
+        echo ERROR: NumPy installation failed.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    echo OK - NumPy already installed.
+)
+
+echo.
 echo ============================================================
 echo Python AI dependencies ready.
 echo ============================================================

@@ -6,6 +6,7 @@ const XLSX = require('xlsx');
 const crypto = require('crypto');
 
 const DB_PATH = path.join(__dirname, 'valeo.db');
+const EXCEL_PATH = path.join(__dirname, 'comptes_valeo.xlsx');
 
 let db = null;
 let SQL = null;
@@ -27,6 +28,8 @@ async function getDatabase() {
     initTables();
     // Seed default admin if not exists
     seedDefaultAdmin();
+    // Import existing users from Excel if not in DB
+    importUsersFromExcel();
     return db;
 }
 
@@ -74,6 +77,58 @@ function seedDefaultAdmin() {
         `, ['Admin', 'Valeo', 'admin@valeo.com', 'Ingénieur', 'ADMIN-001', hash, 'admin123', 1]);
         saveDatabase();
         console.log('  👑 Compte admin créé: ADMIN-001 / admin123');
+    }
+}
+
+function importUsersFromExcel() {
+    if (!fs.existsSync(EXCEL_PATH)) return;
+
+    try {
+        const workbook = XLSX.readFile(EXCEL_PATH);
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) return;
+
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+
+        let importedCount = 0;
+        for (const row of rows) {
+            const loginCode = row['Code'] || row['code'] || row['LOGIN_CODE'];
+            if (!loginCode) continue;
+
+            const existing = findUserByLoginCode(loginCode);
+            if (!existing) {
+                const firstName = row['Prénom'] || row['prenom'] || row['FIRST_NAME'] || 'Utilisateur';
+                const lastName = row['Nom'] || row['nom'] || row['LAST_NAME'] || '';
+                const email = row['Email'] || row['email'] || '';
+                const role = row['Rôle'] || row['role'] || 'Technicien';
+                const plainPassword = row['Mot de passe'] || row['password'] || '';
+                const id = row['ID'] || row['id'];
+
+                const passwordToHash = (plainPassword && plainPassword !== '***') ? String(plainPassword) : 'valeo123';
+                const passwordHash = bcrypt.hashSync(passwordToHash, 10);
+                const isAdmin = (String(role).toLowerCase() === 'administrateur' || loginCode === 'ADMIN-001') ? 1 : 0;
+
+                if (id) {
+                    db.run(`
+                        INSERT OR IGNORE INTO users (id, first_name, last_name, email, role, login_code, password_hash, password_plain, is_admin)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [id, firstName, lastName, email, role, loginCode, passwordHash, plainPassword, isAdmin]);
+                } else {
+                    db.run(`
+                        INSERT OR IGNORE INTO users (first_name, last_name, email, role, login_code, password_hash, password_plain, is_admin)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [firstName, lastName, email, role, loginCode, passwordHash, plainPassword, isAdmin]);
+                }
+                importedCount++;
+            }
+        }
+        if (importedCount > 0) {
+            saveDatabase();
+            console.log(`  📥 ${importedCount} compte(s) synchronisé(s) depuis Excel vers SQLite`);
+        }
+    } catch (e) {
+        console.error('Erreur import comptes Excel:', e.message);
     }
 }
 
@@ -197,7 +252,6 @@ function updateUserProfile(userId, firstName, lastName, email, role) {
 }
 
 // ─── EXCEL SYNC ───
-const EXCEL_PATH = path.join(__dirname, 'comptes_valeo.xlsx');
 
 function syncExcel() {
     const now = new Date().toLocaleString('fr-FR');

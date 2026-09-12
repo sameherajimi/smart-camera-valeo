@@ -1,31 +1,39 @@
-<<<<<<< HEAD
-# .gitignore généré — ignore les fichiers/repères sensibles ou volumineux
+# ============================================================
+# VALEO INTELLIGENT CAMERA - .gitignore
+# ============================================================
 
-# Node
+# Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
-pnpm-lock.yaml
+pnpm-debug.log*
 
 # Python
+.venv/
+venv/
+env/
+ENV/
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.pyc
-env/
-venv/
-.venv/
-ENV/
+.pytest_cache/
+.cache/
+
+# Builds & Distributions
 build/
 dist/
 *.egg-info/
 
-# SQLite / bases locales
+# Base de données locales / SQLite générées au runtime
 *.sqlite3
 *.db
+
+# Fichiers et dossiers temporaires
+.tmp/
+.tmp_excel_inspect.py
 
 # Environnements et secrets
 .env
@@ -35,7 +43,7 @@ secrets/
 *.pem
 *.key
 
-# IDE / OS
+# IDE & Système
 .vscode/
 .idea/
 *.iml
@@ -46,34 +54,7 @@ Thumbs.db
 logs/
 *.log
 
-# Captures / médias (si vous ne voulez pas suivre les images/vidéos)
+# Captures d'images générées au runtime
+server/captures/*
+!server/captures/.gitkeep
 captures/
-server/captures/
-
-# Static build outputs
-dist/
-build/
-
-# Misc
-.cache/
-.pytest_cache/
-=======
-# Node dependencies
-node_modules/
-npm-debug.log*
-
-# Python virtual environment
-.venv/
-venv/
-ENV/
-__pycache__/
-*.py[cod]
-
-# Temporary & local files
-.tmp/
-.vscode/
-*.log
-
-# Server uploads/captures
-server/captures/
->>>>>>> 21390d0cf65a5cdd1377db67e45c981f0c74de52
