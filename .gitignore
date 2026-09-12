@@ -1,3 +1,25 @@
+# Ignore user/workbook files
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+
+# Environment and local editor files
+.env
+.env.*
+.vscode/
+
+# Node modules
+node_modules/
+
+# Runtime / history data
+server/history.json
+
+# Server XML production exports (keep out of repo)
+server/xml/
+
+# Project-stage artifacts
+PROJET-STAGE--main/server/
 <<<<<<< HEAD
 # .gitignore généré — ignore les fichiers/repères sensibles ou volumineux
 
